@@ -28,7 +28,6 @@ namespace rendering
 		void get_settings(const engine::s_renderer_settings* settings);
 
 		bool initialize(HWND window_handle, const engine::s_renderer_settings* const settings);
-
 		void clear_views();
 		bool render();
 
@@ -38,6 +37,10 @@ namespace rendering
 		const bool m_debug;
 		bool m_initialized;
 		
+		const DXGI_FORMAT m_swap_chain_format = DXGI_FORMAT_R10G10B10A2_UNORM;
+		const DXGI_FORMAT m_depth_stencil_format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+		const DXGI_FORMAT m_screen_format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+
 		engine::s_renderer_settings m_settings;
 
 		HWND m_window_handle;
@@ -53,6 +56,10 @@ namespace rendering
 
 		IDXGIDebug* m_dxgi_debug;
 
+		
+	private:
+		void init_dxgi_swap_chain_full_screen_desc(DXGI_SWAP_CHAIN_FULLSCREEN_DESC* full_screen_desc);
+		void init_dxgi_swap_chain_desc(DXGI_SWAP_CHAIN_DESC1* swap_chain_desc);
 	};
 
 }

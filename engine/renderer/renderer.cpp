@@ -9,7 +9,14 @@ namespace rendering
 			unknown->Release();
 	}
 
-	void init_dxgi_swap_chain_full_screen_desc(DXGI_SWAP_CHAIN_FULLSCREEN_DESC* full_screen_desc, const engine::s_renderer_settings* const settings)
+	c_renderer::c_renderer(HWND window_handle, bool debug) : m_feature_level(), m_d3d_device(nullptr), m_d3d_device_context(nullptr),
+		m_debug(debug), m_window_handle(), m_swap_chain(nullptr), m_settings(),
+		m_render_target_view(nullptr), m_depth_stencil_view(nullptr), m_depth_stencil_buffer(nullptr), m_initialized(false), m_dxgi_debug(nullptr)
+	{
+		m_background_color = { 0.392f, 0.584f, 0.929f, 1.0f };
+	}
+
+	void c_renderer::init_dxgi_swap_chain_full_screen_desc(DXGI_SWAP_CHAIN_FULLSCREEN_DESC* full_screen_desc)
 	{
 		memset(full_screen_desc, 0, sizeof(*full_screen_desc));
 		full_screen_desc->RefreshRate.Numerator = 60;
@@ -17,15 +24,15 @@ namespace rendering
 		full_screen_desc->Windowed = true;
 	}
 
-	void init_dxgi_swap_chain_desc(DXGI_SWAP_CHAIN_DESC1* swap_chain_desc, const engine::s_renderer_settings* const settings)
+	void c_renderer::init_dxgi_swap_chain_desc(DXGI_SWAP_CHAIN_DESC1* swap_chain_desc)
 	{
 		memset(swap_chain_desc, 0, sizeof(*swap_chain_desc));
-		swap_chain_desc->Width = settings->width;
-		swap_chain_desc->Height = settings->height;
-		swap_chain_desc->Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		swap_chain_desc->Width = m_settings.width;
+		swap_chain_desc->Height = m_settings.height;
+		swap_chain_desc->Format = m_swap_chain_format;
 		swap_chain_desc->Stereo = false;
-		swap_chain_desc->SampleDesc.Count = settings->multi_sampling_sample_count;
-		swap_chain_desc->SampleDesc.Quality = settings->multi_sampling_quality_level - 1;
+		swap_chain_desc->SampleDesc.Count = m_settings.multi_sampling_sample_count;
+		swap_chain_desc->SampleDesc.Quality = m_settings.multi_sampling_quality_level - 1;
 		swap_chain_desc->BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 		swap_chain_desc->BufferCount = 1;
 
@@ -35,12 +42,6 @@ namespace rendering
 	}
 
 
-	c_renderer::c_renderer(HWND window_handle, bool debug) : m_feature_level(), m_d3d_device(nullptr), m_d3d_device_context(nullptr),
-		m_debug(debug), m_window_handle(), m_swap_chain(nullptr), m_settings(),
-		m_render_target_view(nullptr), m_depth_stencil_view(nullptr), m_depth_stencil_buffer(nullptr), m_initialized(false), m_dxgi_debug(nullptr)
-	{
-		m_background_color = { 0.392f, 0.584f, 0.929f, 1.0f };
-	}
 
 	void c_renderer::set_default_settings(engine::s_renderer_settings::e_window_type window_type)
 	{
@@ -78,10 +79,10 @@ namespace rendering
 				if (SUCCEEDED(output->QueryInterface(__uuidof(IDXGIOutput4), reinterpret_cast<void**>(&output4))))
 				{
 					uint32 num = 0;
-					output4->GetDisplayModeList1(DXGI_FORMAT_R32G32B32A32_FLOAT, 0, &num, 0);
+					output4->GetDisplayModeList1(m_screen_format, 0, &num, 0);
 
 					DXGI_MODE_DESC1* descs = new DXGI_MODE_DESC1[num];
-					output4->GetDisplayModeList1(DXGI_FORMAT_R32G32B32A32_FLOAT, 0, &num, descs);
+					output4->GetDisplayModeList1(m_screen_format, 0, &num, descs);
 
 					if (num > 0)
 					{
@@ -125,12 +126,10 @@ namespace rendering
 
 		D3D_FEATURE_LEVEL feature_levels[] = {
 		D3D_FEATURE_LEVEL_11_1,
-		D3D_FEATURE_LEVEL_11_0,
-		D3D_FEATURE_LEVEL_10_1,
-		D3D_FEATURE_LEVEL_10_0,
+		D3D_FEATURE_LEVEL_11_0
 		};
 
-		int32 feature_level_count = 4;
+		int32 feature_level_count = 2;
 
 		uint32 create_device_flags = 0;
 		if(m_debug)
@@ -153,8 +152,6 @@ namespace rendering
 			debug_printf("Failed to initialize ID3D11Device or ID3D11DeviceContext.\n");
 			return false;
 		}
-			
-
 		
 		init_sucess = false;
 		IDXGIDevice3* dxgi_device = nullptr;
@@ -192,11 +189,11 @@ namespace rendering
 		}
 
 		DXGI_SWAP_CHAIN_FULLSCREEN_DESC full_screen_desc;
-		init_dxgi_swap_chain_full_screen_desc(&full_screen_desc, &m_settings);
+		init_dxgi_swap_chain_full_screen_desc(&full_screen_desc);
 
 
 		DXGI_SWAP_CHAIN_DESC1 swap_chain_desc;
-		init_dxgi_swap_chain_desc(&swap_chain_desc, &m_settings);
+		init_dxgi_swap_chain_desc(&swap_chain_desc);
 
 		
 		if (FAILED(dxgi_factory->CreateSwapChainForHwnd(dxgi_device, m_window_handle, &swap_chain_desc, &full_screen_desc, nullptr, &m_swap_chain)))
@@ -240,7 +237,7 @@ namespace rendering
 		depth_stencil_desc.Height = m_settings.height;
 		depth_stencil_desc.MipLevels = 1;
 		depth_stencil_desc.ArraySize = 1;
-		depth_stencil_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+		depth_stencil_desc.Format = m_depth_stencil_format;
 		depth_stencil_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
 		depth_stencil_desc.Usage = D3D11_USAGE_DEFAULT;
 		depth_stencil_desc.SampleDesc.Count = m_settings.multi_sampling_sample_count;
