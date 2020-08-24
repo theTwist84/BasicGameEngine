@@ -103,6 +103,7 @@
       </PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>$(WindowsSDK_IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CallingConvention>StdCall</CallingConvention>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -123,6 +124,7 @@
       </PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>$(WindowsSDK_IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CallingConvention>StdCall</CallingConvention>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -142,6 +144,7 @@
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>$(WindowsSDK_IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -161,6 +164,7 @@
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>$(WindowsSDK_IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -173,13 +177,17 @@
   <ItemGroup>
     <ClCompile Include="engine.cpp" />
     <ClCompile Include="engine_exception.cpp" />
+    <ClCompile Include="time\engine_time.cpp" />
     <ClCompile Include="renderer\renderer.cpp" />
+    <ClCompile Include="time\engine_clock.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="time\engine_clock.h" />
     <ClInclude Include="engine_debug.h" />
     <ClInclude Include="engine_exception.h" />
     <ClInclude Include="engine_definitions.h" />
     <ClInclude Include="engine_settings.h" />
+    <ClInclude Include="time\engine_time.h" />
     <ClInclude Include="renderer\renderer.h" />
   </ItemGroup>
   <ItemGroup>

@@ -32,7 +32,7 @@ namespace engine
 		uint32 multi_sampling_quality_level;
 
 	};
-	static_assert(sizeof(s_renderer_settings) == 0x14, "sizeof(s_renderer_settings) != 0x14");
+	static_assert(sizeof(s_renderer_settings) == 0x14);
 
 
 	struct s_camera_settings

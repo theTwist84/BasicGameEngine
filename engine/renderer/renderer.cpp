@@ -6,14 +6,17 @@ namespace rendering
 	void release_d3d_object(IUnknown* unknown)
 	{
 		if (unknown != nullptr)
+		{
 			unknown->Release();
+			unknown = nullptr;
+		}
 	}
 
 	c_renderer::c_renderer(HWND window_handle, bool debug) : m_feature_level(), m_d3d_device(nullptr), m_d3d_device_context(nullptr),
-		m_debug(debug), m_window_handle(), m_swap_chain(nullptr), m_settings(),
+		m_debug(debug), m_window_handle(), m_swap_chain(nullptr), m_settings(), m_d3d_initialized(false),
 		m_render_target_view(nullptr), m_depth_stencil_view(nullptr), m_depth_stencil_buffer(nullptr), m_initialized(false), m_dxgi_debug(nullptr)
 	{
-		m_background_color = { 0.392f, 0.584f, 0.929f, 1.0f };
+		m_background_color = { 0.3f, 0.3f, 0.3f, 1.0f };
 	}
 
 	void c_renderer::init_dxgi_swap_chain_full_screen_desc(DXGI_SWAP_CHAIN_FULLSCREEN_DESC* full_screen_desc)
@@ -41,10 +44,78 @@ namespace rendering
 		swap_chain_desc->AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
 	}
 
+	void c_renderer::init_viewport(D3D11_VIEWPORT* viewport)
+	{
+		memset(viewport, 0, sizeof(*viewport));
+		viewport->TopLeftX = 0.0f;
+		viewport->TopLeftY = 0.0f;
+		viewport->Width = static_cast<float>(m_settings.width);
+		viewport->Height = static_cast<float>(m_settings.height);
+		viewport->MinDepth = 0.0f;
+		viewport->MaxDepth = 1.0f;
+	}
 
+	void c_renderer::init_depth_stencil_buffer(D3D11_TEXTURE2D_DESC* texture)
+	{
+		memset(texture, 0, sizeof(*texture));
+		texture->Width = m_settings.width;
+		texture->Height = m_settings.height;
+		texture->MipLevels = 1;
+		texture->ArraySize = 1;
+		texture->Format = m_depth_stencil_format;
+		texture->BindFlags = D3D11_BIND_DEPTH_STENCIL;
+		texture->Usage = D3D11_USAGE_DEFAULT;
+		texture->SampleDesc.Count = m_settings.multi_sampling_sample_count;
+		texture->SampleDesc.Quality = m_settings.multi_sampling_quality_level - 1;
+	}
+
+	bool c_renderer::init_d3d_device()
+	{
+		D3D_FEATURE_LEVEL feature_levels[] = {
+		D3D_FEATURE_LEVEL_11_1,
+		D3D_FEATURE_LEVEL_11_0
+		};
+
+		int32 feature_level_count = 2;
+
+		uint32 create_device_flags = 0;
+		if (m_debug)
+			create_device_flags |= D3D11_CREATE_DEVICE_DEBUG;
+
+		ID3D11Device* d3d_device = nullptr;
+		ID3D11DeviceContext* d3d_device_context = nullptr;
+
+		bool init_success = false;
+
+		if (SUCCEEDED(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, create_device_flags, feature_levels, feature_level_count, D3D11_SDK_VERSION, &d3d_device, &m_feature_level, &d3d_device_context)))
+		{
+			if (SUCCEEDED(d3d_device->QueryInterface(__uuidof(ID3D11Device1), reinterpret_cast<void**>(&m_d3d_device))))
+			{
+				if (SUCCEEDED(d3d_device_context->QueryInterface(__uuidof(ID3D11DeviceContext1), reinterpret_cast<void**>(&m_d3d_device_context))))
+					init_success = true;
+				else
+					debug_printf("Failed ID3D11DeviceContext::QueryInterface() for ID3D11DeviceContext1.\n");
+			}
+			else
+				debug_printf("Failed ID3D11Device::QueryInterface() for  ID3D11Device1.\n");
+		}	
+		else
+			debug_printf("Failed D3D11CreateDevice().\n");
+				
+		release_d3d_object(d3d_device);
+		release_d3d_object(d3d_device_context);
+		m_d3d_initialized = init_success;
+		return init_success;
+	}
 
 	void c_renderer::set_default_settings(engine::s_renderer_settings::e_window_type window_type)
 	{
+		if (!m_d3d_initialized)
+		{
+			debug_printf("Cannot create default settings if D3D has not been initialized");
+			return;
+		}
+
 		engine::s_renderer_settings default_settings;
 
 		// TODO: build default settings
@@ -54,7 +125,7 @@ namespace rendering
 		default_settings.anti_aliasing_type = engine::s_renderer_settings::e_anti_aliasing_type::_anti_aliasing_off;
 		default_settings.multi_sampling_sample_count = 1;
 		
-		m_d3d_device->CheckMultisampleQualityLevels(DXGI_FORMAT_R8G8B8A8_UNORM, default_settings.multi_sampling_sample_count, &default_settings.multi_sampling_quality_level);
+		m_d3d_device->CheckMultisampleQualityLevels(m_swap_chain_format, default_settings.multi_sampling_sample_count, &default_settings.multi_sampling_quality_level);
 
 		if (default_settings.multi_sampling_quality_level == 0)
 		{
@@ -124,36 +195,10 @@ namespace rendering
 	{
 		m_window_handle = window_handle;
 
-		D3D_FEATURE_LEVEL feature_levels[] = {
-		D3D_FEATURE_LEVEL_11_1,
-		D3D_FEATURE_LEVEL_11_0
-		};
-
-		int32 feature_level_count = 2;
-
-		uint32 create_device_flags = 0;
-		if(m_debug)
-			create_device_flags |= D3D11_CREATE_DEVICE_DEBUG;
-
-		ID3D11Device* d3d_device = nullptr;
-		ID3D11DeviceContext* d3d_device_context = nullptr;
-		bool init_sucess = false;
-
-		if (SUCCEEDED(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, create_device_flags, feature_levels, feature_level_count, D3D11_SDK_VERSION, &d3d_device, &m_feature_level, &d3d_device_context)))
-			if (SUCCEEDED(d3d_device->QueryInterface(__uuidof(ID3D11Device1), reinterpret_cast<void**>(&m_d3d_device))))
-				if (SUCCEEDED(d3d_device_context->QueryInterface(__uuidof(ID3D11DeviceContext1), reinterpret_cast<void**>(&m_d3d_device_context))))
-					init_sucess = true;
-
-		release_d3d_object(d3d_device);
-		release_d3d_object(d3d_device_context);
-
-		if (!init_sucess)
-		{
-			debug_printf("Failed to initialize ID3D11Device or ID3D11DeviceContext.\n");
+		if (!init_d3d_device())
 			return false;
-		}
 		
-		init_sucess = false;
+		bool init_success = false;
 		IDXGIDevice3* dxgi_device = nullptr;
 		IDXGIAdapter3* dxgi_adapter = nullptr;
 		IDXGIFactory4* dxgi_factory = nullptr;
@@ -162,18 +207,21 @@ namespace rendering
 			if (SUCCEEDED(dxgi_device->GetParent(__uuidof(IDXGIAdapter3), reinterpret_cast<void**>(&dxgi_adapter))))
 			{
 				if (SUCCEEDED(dxgi_adapter->GetParent(__uuidof(IDXGIFactory4), reinterpret_cast<void**>(&dxgi_factory))))
-				{
-					init_sucess = true;
-				}
+					init_success = true;
+				else
+					debug_printf("Failed IDXGIDevice3::GetParent() for IDXGIFactory4.\n");
 			}
+			else
+				debug_printf("Failed IDXGIDevice3::GetParent() for IDXGIAdapter3.\n");
 		}
+		else
+			debug_printf("Failed ID3D11Device1::QueryInterface() for IDXGIDevice3.\n");
 
-		if (!init_sucess)
+		if (!init_success)
 		{
 			release_d3d_object(dxgi_device);
 			release_d3d_object(dxgi_adapter);
 			release_d3d_object(dxgi_factory);
-			debug_printf("Failed to obtain DXGI interfaces.\n");
 			return false;
 		}
 
@@ -209,7 +257,6 @@ namespace rendering
 		release_d3d_object(dxgi_adapter);
 		release_d3d_object(dxgi_factory);
 
-
 		ID3D11Texture2D* back_buffer = nullptr;
 		
 		// acquire back buffer resource
@@ -232,17 +279,7 @@ namespace rendering
 		// create resource depth stencil buffer
 
 		D3D11_TEXTURE2D_DESC depth_stencil_desc;
-		memset(&depth_stencil_desc, 0, sizeof(depth_stencil_desc));
-		depth_stencil_desc.Width = m_settings.width;
-		depth_stencil_desc.Height = m_settings.height;
-		depth_stencil_desc.MipLevels = 1;
-		depth_stencil_desc.ArraySize = 1;
-		depth_stencil_desc.Format = m_depth_stencil_format;
-		depth_stencil_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-		depth_stencil_desc.Usage = D3D11_USAGE_DEFAULT;
-		depth_stencil_desc.SampleDesc.Count = m_settings.multi_sampling_sample_count;
-		depth_stencil_desc.SampleDesc.Quality = m_settings.multi_sampling_quality_level - 1;
-
+		init_depth_stencil_buffer(&depth_stencil_desc);
 
 		if (FAILED(m_d3d_device->CreateTexture2D(&depth_stencil_desc, nullptr, &m_depth_stencil_buffer)))
 		{
@@ -250,22 +287,14 @@ namespace rendering
 			return false;
 		}
 			
-
 		if (FAILED(m_d3d_device->CreateDepthStencilView(m_depth_stencil_buffer, nullptr, &m_depth_stencil_view)))
 		{
 			debug_printf("Failed ID3D11Device::CreateDepthStencilView()\n");
 			return false;
 		}
 			
-
-
 		D3D11_VIEWPORT viewport;
-		viewport.TopLeftX = 0.0f;
-		viewport.TopLeftY = 0.0f;
-		viewport.Width = static_cast<float>(m_settings.width);
-		viewport.Height = static_cast<float>(m_settings.height);
-		viewport.MinDepth = 0.0f;
-		viewport.MaxDepth = 1.0f;
+		init_viewport(&viewport);
 
 		m_d3d_device_context->OMSetRenderTargets(1, &m_render_target_view, m_depth_stencil_view);
 		m_d3d_device_context->RSSetViewports(1, &viewport);
@@ -276,23 +305,48 @@ namespace rendering
 
 	bool c_renderer::verify_settings(const engine::s_renderer_settings* const settings)
 	{
+		if (!m_d3d_initialized)
+		{
+			debug_printf("Cannot verify settings if D3D has not been initialized");
+			return false;
+		}
+
 		if (settings == nullptr)
 			return false;
 
 		// verify super sampling, resolution, and other features
 
+		uint32 quality_level = 0;
+		m_d3d_device->CheckMultisampleQualityLevels(m_swap_chain_format, settings->multi_sampling_sample_count, &quality_level);
+
+		if (quality_level == 0 || settings->multi_sampling_quality_level != quality_level)
+		{
+			debug_printf("Mutlisampling with %d samples not supported.\n", settings->multi_sampling_sample_count);
+			return false;
+		}
 
 		return true;
 	}
 
 	void c_renderer::clear_views()
 	{
+		if (!m_d3d_initialized)
+		{
+			debug_printf("Cannot clear views if D3D has not been initialized");
+			return;
+		}
+
 		m_d3d_device_context->ClearRenderTargetView(m_render_target_view, reinterpret_cast<const float*>(&m_background_color));
 		m_d3d_device_context->ClearDepthStencilView(m_depth_stencil_view, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 	}
 
 	bool c_renderer::render()
 	{
+		if (!m_d3d_initialized)
+		{
+			debug_printf("Cannot present if D3D has not been initialized");
+			return false;
+		}
 		return SUCCEEDED(m_swap_chain->Present(0, 0));
 	}
 
@@ -303,9 +357,9 @@ namespace rendering
 		release_d3d_object(m_depth_stencil_buffer);
 		release_d3d_object(m_depth_stencil_view);
 		release_d3d_object(m_dxgi_debug);
+
 		if (m_d3d_device_context != nullptr)
 			m_d3d_device_context->ClearState();
-
 
 		release_d3d_object(m_d3d_device_context);
 		release_d3d_object(m_d3d_device);

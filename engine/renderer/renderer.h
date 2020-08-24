@@ -32,11 +32,12 @@ namespace rendering
 		bool render();
 
 		DirectX::XMVECTORF32 m_background_color;
-	protected:
+
+	private:
 
 		const bool m_debug;
 		bool m_initialized;
-		
+		bool m_d3d_initialized;
 		const DXGI_FORMAT m_swap_chain_format = DXGI_FORMAT_R10G10B10A2_UNORM;
 		const DXGI_FORMAT m_depth_stencil_format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 		const DXGI_FORMAT m_screen_format = DXGI_FORMAT_R32G32B32A32_FLOAT;
@@ -56,10 +57,11 @@ namespace rendering
 
 		IDXGIDebug* m_dxgi_debug;
 
-		
-	private:
 		void init_dxgi_swap_chain_full_screen_desc(DXGI_SWAP_CHAIN_FULLSCREEN_DESC* full_screen_desc);
 		void init_dxgi_swap_chain_desc(DXGI_SWAP_CHAIN_DESC1* swap_chain_desc);
+		void init_viewport(D3D11_VIEWPORT* viewport);
+		void init_depth_stencil_buffer(D3D11_TEXTURE2D_DESC* texture);
+		bool init_d3d_device();
 	};
 
 }
