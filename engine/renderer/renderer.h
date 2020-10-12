@@ -33,6 +33,9 @@ namespace rendering
 
 		DirectX::XMVECTORF32 m_background_color;
 
+		inline ID3D11DeviceContext1* d3d_device_context() const { return m_d3d_device_context; }
+		inline ID3D11Device1* d3d_device() const { return m_d3d_device; }
+
 	private:
 
 		const bool m_debug;

@@ -3,6 +3,9 @@
 #include "renderer/renderer.h"
 #include <iostream>
 #include "engine_debug.h"
+#include "time/engine_time.h"
+#include "time/engine_clock.h"
+#include "debug_ui/fps_display.h"
 
 UINT mScreenWidth = 1024;
 UINT mScreenHeight = 768;
@@ -29,6 +32,10 @@ int game_main(HINSTANCE instance, HINSTANCE previous_instance, LPSTR command_lin
 {
 	debug_printf("Starting up basic_game...\n");
 
+	c_engine_clock clock = c_engine_clock();
+	c_engine_time time = c_engine_time();
+	c_fps_display fps_display = c_fps_display();
+
 	std::wstring window_class_name = L"BasicGame";
 
 	initialize_window(instance, window_class_name, L"Basic Game", show_command);
@@ -54,12 +61,22 @@ int game_main(HINSTANCE instance, HINSTANCE previous_instance, LPSTR command_lin
 		return -1;
 	}
 
+	// init services
+	fps_display.init(&g_renderer);
+	
 
+
+
+
+	// main loop
 	MSG message;
 	ZeroMemory(&message, sizeof(message));
 
+	clock.reset();
+
 	while (message.message != WM_QUIT)
 	{
+		
 		if (PeekMessage(&message, nullptr, 0, 0, PM_REMOVE))
 		{
 			TranslateMessage(&message);
@@ -67,9 +84,20 @@ int game_main(HINSTANCE instance, HINSTANCE previous_instance, LPSTR command_lin
 		}
 		else
 		{
+			clock.update_engine_time(&time);
+
 			g_renderer.clear_views();
+			
 			// game stuff
+			fps_display.update(&time);
+
+
+			// draw stuff
+			fps_display.draw(&time);
+
+
 			g_renderer.render();
+			Sleep(1000/60);
 		}
 	}
 
