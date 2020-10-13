@@ -96,6 +96,8 @@ int game_main(HINSTANCE instance, HINSTANCE previous_instance, LPSTR command_lin
 			fps_display.draw(&time);
 
 
+			g_renderer.test_d2d();
+
 			g_renderer.render();
 			Sleep(1000/60);
 		}

@@ -34,17 +34,22 @@ namespace rendering
 		void clear_views();
 		bool render();
 
+		bool init_d2d_brushes_fonts();
+		bool test_d2d();
+
 		DirectX::XMVECTORF32 m_background_color;
 
-		inline ID3D11DeviceContext1* d3d_device_context() const { return m_d3d_device_context; }
 		inline ID3D11Device1* d3d_device() const { return m_d3d_device; }
+		inline ID2D1Device1* d2d_device() const { return m_d2d_device; }
+		inline ID3D11DeviceContext1* d3d_device_context() const { return m_d3d_device_context; }
+		inline ID2D1DeviceContext1* d2d_device_context() const { return m_d2d_device_context; }
 
 	private:
 
 		const bool m_debug;
 		bool m_initialized;
 		bool m_d3d_initialized;
-		const DXGI_FORMAT m_swap_chain_format = DXGI_FORMAT_R10G10B10A2_UNORM;
+		const DXGI_FORMAT m_swap_chain_format = DXGI_FORMAT_R8G8B8A8_UNORM;
 		const DXGI_FORMAT m_depth_stencil_format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 		const DXGI_FORMAT m_screen_format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 
@@ -62,6 +67,10 @@ namespace rendering
 
 		ID2D1Device1* m_d2d_device;
 		ID2D1DeviceContext1* m_d2d_device_context;
+
+		ID2D1SolidColorBrush* m_yellow_brush;
+		IDWriteFactory* m_write_factory;
+		IDWriteTextFormat* m_text_format;
 
 		void init_dxgi_swap_chain_full_screen_desc(DXGI_SWAP_CHAIN_FULLSCREEN_DESC* full_screen_desc);
 		void init_dxgi_swap_chain_desc(DXGI_SWAP_CHAIN_DESC1* swap_chain_desc);

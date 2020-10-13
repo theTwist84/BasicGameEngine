@@ -1,5 +1,6 @@
 #include "renderer.h"
 #include <winerror.h>
+#include <string>
 
 namespace rendering
 {
@@ -19,6 +20,9 @@ namespace rendering
 		m_background_color = { 0.3f, 0.3f, 0.3f, 1.0f };
 		m_d2d_device = nullptr;
 		m_d2d_device_context = nullptr;
+		m_yellow_brush = nullptr;
+		m_write_factory = nullptr;
+		m_text_format = nullptr;
 	}
 
 	void c_renderer::init_dxgi_swap_chain_full_screen_desc(DXGI_SWAP_CHAIN_FULLSCREEN_DESC* full_screen_desc)
@@ -83,6 +87,9 @@ namespace rendering
 		uint32 create_device_flags = 0;
 		if (m_debug)
 			create_device_flags |= D3D11_CREATE_DEVICE_DEBUG;
+
+		// to allow D2D to work
+		create_device_flags |= D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 
 		ID3D11Device* d3d_device = nullptr;
 		ID3D11DeviceContext* d3d_device_context = nullptr;
@@ -305,6 +312,9 @@ namespace rendering
 		if (!c_renderer::init_d2d())
 			return false;
 
+		if (!c_renderer::init_d2d_brushes_fonts())
+			return false;
+
 		m_initialized = true;
 
 		return true;
@@ -339,7 +349,7 @@ namespace rendering
 	{
 		if (!m_d3d_initialized)
 		{
-			debug_printf("Cannot clear views if D3D has not been initialized");
+			debug_printf("Cannot clear views if D3D is initialized");
 			return;
 		}
 
@@ -351,7 +361,7 @@ namespace rendering
 	{
 		if (!m_d3d_initialized)
 		{
-			debug_printf("Cannot present if D3D has not been initialized");
+			debug_printf("Cannot present if D3D is not initialized");
 			return false;
 		}
 		return SUCCEEDED(m_swap_chain->Present(0, 0));
@@ -365,8 +375,10 @@ namespace rendering
 		release_unknown_object(m_depth_stencil_view);
 		release_unknown_object(m_dxgi_debug);
 
-		if (m_d2d_device_context != nullptr)
-			m_d2d_device_context->Clear();
+
+		release_unknown_object(m_yellow_brush);
+		release_unknown_object(m_write_factory);
+		release_unknown_object(m_text_format);
 
 		release_unknown_object(m_d2d_device_context);
 		release_unknown_object(m_d2d_device);
@@ -381,7 +393,6 @@ namespace rendering
 	bool c_renderer::init_d2d()
 	{
 		bool init_success = false;
-		IDWriteFactory* write_factory = nullptr;
 		ID2D1Factory2* d2d_factory = nullptr;
 		IDXGIDevice3* dxgi_device = nullptr;
 
@@ -392,7 +403,7 @@ namespace rendering
 
 		// initialize D2D device and device context
 
-		if (SUCCEEDED(DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&write_factory))))
+		if (SUCCEEDED(DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&m_write_factory))))
 		{
 			if (SUCCEEDED(D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, __uuidof(ID2D1Factory2), &factory_options, reinterpret_cast<void**>(&d2d_factory))))
 			{
@@ -418,7 +429,6 @@ namespace rendering
 		else
 			debug_printf("Failed DWriteCreateFactory() for IDWriteFactory.\n");
 
-		release_unknown_object(write_factory);
 		release_unknown_object(d2d_factory);
 		release_unknown_object(dxgi_device);
 
@@ -458,6 +468,62 @@ namespace rendering
 		release_unknown_object(bitmap);
 
 		return init_success;
+	}
+
+	bool c_renderer::init_d2d_brushes_fonts()
+	{
+		auto debug_font = L"Lucida Console";
+		IDWriteFontCollection* font_collection = nullptr;	// use system font collection
+		DWRITE_FONT_WEIGHT font_weight = DWRITE_FONT_WEIGHT_LIGHT;
+		DWRITE_FONT_STYLE font_style = DWRITE_FONT_STYLE_NORMAL;
+		DWRITE_FONT_STRETCH font_stretch = DWRITE_FONT_STRETCH_NORMAL;
+		float32 font_size = 12.0f;
+		auto locale_name = L"en-GB";
+
+		if (SUCCEEDED(m_d2d_device_context->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Yellow), &m_yellow_brush)))
+		{
+			if (SUCCEEDED(m_write_factory->CreateTextFormat(debug_font, font_collection, font_weight, font_style, font_stretch, font_size, locale_name, &m_text_format)))
+			{
+				if (SUCCEEDED(m_text_format->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING)))
+				{
+					if (SUCCEEDED(m_text_format->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR)))
+					{
+						return true;
+					}
+					else
+						debug_printf("Failed DWriteFactory::SetParagraphAlignment().\n");
+				}
+				else
+					debug_printf("Failed DWriteFactory::SetTextAlignment().\n");
+			}
+			else
+				debug_printf("Failed DWriteFactory::CreateTextFormat().\n");
+		}
+		else
+			debug_printf("Failed ID2D1DeviceContext1::CreateSolidColorBrush().\n");
+
+
+
+		return false;
+		
+	}
+
+
+	bool c_renderer::test_d2d()
+	{
+		// first, create the text layout with actual text
+		std::wstring message = L"Hello there";
+		IDWriteTextLayout* layout = nullptr;
+
+		// temporary float values set, either use the window size or a predefined box size
+		m_write_factory->CreateTextLayout(message.c_str(), (uint32)message.size(), m_text_format, 100.0f, 100.0f, &layout);
+
+		// unsafe drawing, must have result checks
+		m_d2d_device_context->BeginDraw();
+		m_d2d_device_context->DrawTextLayout(D2D1::Point2F(2.0f, 5.0f), layout, m_yellow_brush);
+		m_d2d_device_context->EndDraw();
+
+		return true;
 	}
 
 
