@@ -3,7 +3,7 @@
 
 namespace rendering
 {
-	void release_d3d_object(IUnknown* unknown)
+	void release_unknown_object(IUnknown* unknown)
 	{
 		if (unknown != nullptr)
 		{
@@ -17,6 +17,8 @@ namespace rendering
 		m_render_target_view(nullptr), m_depth_stencil_view(nullptr), m_depth_stencil_buffer(nullptr), m_initialized(false), m_dxgi_debug(nullptr)
 	{
 		m_background_color = { 0.3f, 0.3f, 0.3f, 1.0f };
+		m_d2d_device = nullptr;
+		m_d2d_device_context = nullptr;
 	}
 
 	void c_renderer::init_dxgi_swap_chain_full_screen_desc(DXGI_SWAP_CHAIN_FULLSCREEN_DESC* full_screen_desc)
@@ -102,8 +104,8 @@ namespace rendering
 		else
 			debug_printf("Failed D3D11CreateDevice().\n");
 				
-		release_d3d_object(d3d_device);
-		release_d3d_object(d3d_device_context);
+		release_unknown_object(d3d_device);
+		release_unknown_object(d3d_device_context);
 		m_d3d_initialized = init_success;
 		return init_success;
 	}
@@ -165,8 +167,8 @@ namespace rendering
 
 			}
 
-			release_d3d_object(output);
-			release_d3d_object(output4);
+			release_unknown_object(output);
+			release_unknown_object(output4);
 		}
 		
 		c_renderer::update_settings(&default_settings);
@@ -219,9 +221,9 @@ namespace rendering
 
 		if (!init_success)
 		{
-			release_d3d_object(dxgi_device);
-			release_d3d_object(dxgi_adapter);
-			release_d3d_object(dxgi_factory);
+			release_unknown_object(dxgi_device);
+			release_unknown_object(dxgi_adapter);
+			release_unknown_object(dxgi_factory);
 			return false;
 		}
 
@@ -246,35 +248,35 @@ namespace rendering
 		
 		if (FAILED(dxgi_factory->CreateSwapChainForHwnd(dxgi_device, m_window_handle, &swap_chain_desc, &full_screen_desc, nullptr, &m_swap_chain)))
 		{
-			release_d3d_object(dxgi_device);
-			release_d3d_object(dxgi_adapter);
-			release_d3d_object(dxgi_factory);
+			release_unknown_object(dxgi_device);
+			release_unknown_object(dxgi_adapter);
+			release_unknown_object(dxgi_factory);
 			debug_printf("Failed in IDXGIFactory::CreateSwapChainForHwnd()\n");
 			return false;
 		}
 
-		release_d3d_object(dxgi_device);
-		release_d3d_object(dxgi_adapter);
-		release_d3d_object(dxgi_factory);
+		release_unknown_object(dxgi_device);
+		release_unknown_object(dxgi_adapter);
+		release_unknown_object(dxgi_factory);
 
 		ID3D11Texture2D* back_buffer = nullptr;
 		
 		// acquire back buffer resource
 		if (FAILED(m_swap_chain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&back_buffer))))
 		{
-			release_d3d_object(back_buffer);
+			release_unknown_object(back_buffer);
 			debug_printf("Failed IDXGISwapChain::GetBuffer(0)\n");
 			return false;
 		}
 		// create resource view for render target from the back buffer
 		if (FAILED(m_d3d_device->CreateRenderTargetView(back_buffer, nullptr, &m_render_target_view)))
 		{
-			release_d3d_object(back_buffer);
+			release_unknown_object(back_buffer);
 			debug_printf("Failed ID3D11Device::CreateRenderTargetView() for back buffer\n");
 			return false;
 		}
 
-		release_d3d_object(back_buffer);
+		release_unknown_object(back_buffer);
 
 		// create resource depth stencil buffer
 
@@ -298,6 +300,11 @@ namespace rendering
 
 		m_d3d_device_context->OMSetRenderTargets(1, &m_render_target_view, m_depth_stencil_view);
 		m_d3d_device_context->RSSetViewports(1, &viewport);
+
+		// initialize D2D
+		if (!c_renderer::init_d2d())
+			return false;
+
 		m_initialized = true;
 
 		return true;
@@ -352,16 +359,109 @@ namespace rendering
 
 	c_renderer::~c_renderer()
 	{
-		release_d3d_object(m_swap_chain);
-		release_d3d_object(m_render_target_view);
-		release_d3d_object(m_depth_stencil_buffer);
-		release_d3d_object(m_depth_stencil_view);
-		release_d3d_object(m_dxgi_debug);
+		release_unknown_object(m_swap_chain);
+		release_unknown_object(m_render_target_view);
+		release_unknown_object(m_depth_stencil_buffer);
+		release_unknown_object(m_depth_stencil_view);
+		release_unknown_object(m_dxgi_debug);
+
+		if (m_d2d_device_context != nullptr)
+			m_d2d_device_context->Clear();
+
+		release_unknown_object(m_d2d_device_context);
+		release_unknown_object(m_d2d_device);
 
 		if (m_d3d_device_context != nullptr)
 			m_d3d_device_context->ClearState();
 
-		release_d3d_object(m_d3d_device_context);
-		release_d3d_object(m_d3d_device);
+		release_unknown_object(m_d3d_device_context);
+		release_unknown_object(m_d3d_device);
 	}
+
+	bool c_renderer::init_d2d()
+	{
+		bool init_success = false;
+		IDWriteFactory* write_factory = nullptr;
+		ID2D1Factory2* d2d_factory = nullptr;
+		IDXGIDevice3* dxgi_device = nullptr;
+
+		D2D1_FACTORY_OPTIONS factory_options;
+		factory_options.debugLevel = D2D1_DEBUG_LEVEL_NONE;
+		if (m_debug)
+			factory_options.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
+
+		// initialize D2D device and device context
+
+		if (SUCCEEDED(DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&write_factory))))
+		{
+			if (SUCCEEDED(D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, __uuidof(ID2D1Factory2), &factory_options, reinterpret_cast<void**>(&d2d_factory))))
+			{
+				
+				if (SUCCEEDED(m_d3d_device->QueryInterface(__uuidof(IDXGIDevice3), reinterpret_cast<void**>(&dxgi_device))))
+				{
+					if (SUCCEEDED(d2d_factory->CreateDevice(dxgi_device, &m_d2d_device)))
+					{
+						if (SUCCEEDED(m_d2d_device->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS, &m_d2d_device_context)))
+							init_success = true;
+						else
+							debug_printf("Failed ID2D1Device1::CreateDeviceContext() for ID2D1DeviceContext1.\n");
+					}
+					else
+						debug_printf("Failed ID2D1Factory2::CreateDevice() for ID2D1Device1.\n");
+				}
+				else
+					debug_printf("Failed ID3D11Device1::QueryInterface() for IDXGIDevice3.\n");
+			}
+			else
+				debug_printf("Failed D2D1CreateFactory() for ID2D1Factory2.\n");
+		}
+		else
+			debug_printf("Failed DWriteCreateFactory() for IDWriteFactory.\n");
+
+		release_unknown_object(write_factory);
+		release_unknown_object(d2d_factory);
+		release_unknown_object(dxgi_device);
+
+		if (!init_success)
+			return false;
+
+		init_success = false;
+
+		// initialize bitmap properties for D2D
+
+		D2D1_BITMAP_PROPERTIES1 bitmap_properties;
+
+		bitmap_properties.pixelFormat.format = m_swap_chain_format;
+		bitmap_properties.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+		bitmap_properties.dpiX = 96.0f;
+		bitmap_properties.dpiY = 96.0f;
+		bitmap_properties.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
+		bitmap_properties.colorContext = nullptr;
+		
+		IDXGISurface1* dxgi_buffer = nullptr;
+		ID2D1Bitmap1* bitmap = nullptr;
+
+		if (SUCCEEDED(m_swap_chain->GetBuffer(0, __uuidof(IDXGISurface1), reinterpret_cast<void**>(&dxgi_buffer))))
+		{
+			if (SUCCEEDED(m_d2d_device_context->CreateBitmapFromDxgiSurface(dxgi_buffer, &bitmap_properties, &bitmap)))
+			{
+				m_d2d_device_context->SetTarget(bitmap);
+				init_success = true;
+			}
+			else
+				debug_printf("Failed ID2D1DeviceContext1::CreateBitmapFromDxgiSurface() for ID2D1Bitmap1.\n");
+		}
+		else
+			debug_printf("Failed IDXGISwapChain1::GetBuffer() for IDXGISurface1.\n");
+
+		release_unknown_object(dxgi_buffer);
+		release_unknown_object(bitmap);
+
+		return init_success;
+	}
+
+
+
+
+
 }

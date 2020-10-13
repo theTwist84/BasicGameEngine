@@ -2,6 +2,9 @@
 #define ENGINE_RENDERER_RENDERER_H
 
 #include <d3d11_4.h>
+#include <d2d1_3.h>
+#include <dwrite_3.h>
+
 #include <DirectXMath.h>
 #include <DirectXPackedVector.h>
 #include <dxgidebug.h>
@@ -12,7 +15,7 @@
 
 namespace rendering
 {
-	void release_d3d_object(IUnknown* unknown);
+	void release_unknown_object(IUnknown* unknown);
 
 
 	class c_renderer
@@ -52,19 +55,21 @@ namespace rendering
 		ID3D11Device1* m_d3d_device;
 		ID3D11DeviceContext1* m_d3d_device_context;
 		IDXGISwapChain1* m_swap_chain;
-
 		ID3D11Texture2D* m_depth_stencil_buffer;
 		ID3D11DepthStencilView* m_depth_stencil_view;
-
 		ID3D11RenderTargetView* m_render_target_view;
-
 		IDXGIDebug* m_dxgi_debug;
+
+		ID2D1Device1* m_d2d_device;
+		ID2D1DeviceContext1* m_d2d_device_context;
 
 		void init_dxgi_swap_chain_full_screen_desc(DXGI_SWAP_CHAIN_FULLSCREEN_DESC* full_screen_desc);
 		void init_dxgi_swap_chain_desc(DXGI_SWAP_CHAIN_DESC1* swap_chain_desc);
 		void init_viewport(D3D11_VIEWPORT* viewport);
 		void init_depth_stencil_buffer(D3D11_TEXTURE2D_DESC* texture);
 		bool init_d3d_device();
+
+		bool init_d2d();
 	};
 
 }
