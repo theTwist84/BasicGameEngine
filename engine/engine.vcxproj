@@ -179,6 +179,7 @@
     <ClCompile Include="engine.cpp" />
     <ClCompile Include="engine_exception.cpp" />
     <ClCompile Include="IO\utils.cpp" />
+    <ClCompile Include="memory\data_array.cpp" />
     <ClCompile Include="time\engine_time.cpp" />
     <ClCompile Include="renderer\renderer.cpp" />
     <ClCompile Include="time\engine_clock.cpp" />
@@ -186,6 +187,7 @@
   <ItemGroup>
     <ClInclude Include="debug_ui\fps_display.h" />
     <ClInclude Include="IO\utils.h" />
+    <ClInclude Include="memory\data_array.h" />
     <ClInclude Include="time\engine_clock.h" />
     <ClInclude Include="engine_debug.h" />
     <ClInclude Include="engine_exception.h" />

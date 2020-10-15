@@ -508,7 +508,6 @@ namespace rendering
 		
 	}
 
-
 	bool c_renderer::test_d2d()
 	{
 		// first, create the text layout with actual text
@@ -525,9 +524,5 @@ namespace rendering
 
 		return true;
 	}
-
-
-
-
 
 }
