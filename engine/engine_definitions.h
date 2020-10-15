@@ -1,6 +1,17 @@
 #ifndef ENGINE_ENGINE_DEFINITIONS_H 
 #define ENGINE_ENGINE_DEFINITIONS_H
 
+
+enum
+{
+	k_maximum_string_length = 32,
+	k_maximum_long_string_length = 256,
+
+	k_debug_fill_data = 0xBA,
+
+};
+
+
 typedef char sbyte;
 typedef unsigned char byte;
 typedef sbyte int8;
