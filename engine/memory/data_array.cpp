@@ -80,7 +80,7 @@ namespace engine
 		delete_all();
 	}
 
-	void dispose(s_data_array* data_array)
+	void dispose_data_array(s_data_array* data_array)
 	{	
 		memset(data_array, 0, sizeof(s_data_array));
 		// TODO: use custom allocator
@@ -198,5 +198,32 @@ namespace engine
 		datum_handle new_handle = datum_index | ((int64)new_salt << k_salt_size);
 
 		return new_handle;
+	}
+
+	char* s_data_array::datum_get(datum_handle handle)
+	{
+		int32 index = handle & 0xFFFFFFFF;
+		int32 salt = (handle >> 32) & 0xFFFFFFFF;
+
+		char* result = nullptr;
+		if (handle != -1 && index < this->first_unallocated_index)
+		{
+			char* datum = &this->data[index * this->datum_size];
+			if ((*(s_datum_header*)datum).salt == salt)
+				result = datum;
+		}
+		return result;
+	}
+
+	char* s_data_array::datum_get_absolute(int64 index)
+	{
+		char* result = nullptr;
+		if (index != -1 && index >= 0 && index < this->first_unallocated_index)
+		{
+			char* datum = &this->data[index * this->datum_size];
+			if ((*(s_datum_header*)datum).salt != 0)
+				result = datum;
+		}
+		return result;
 	}
 }

@@ -18,5 +18,8 @@
     <ClCompile Include="test_platform.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="game_loop_tester.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

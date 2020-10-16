@@ -165,6 +165,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="game_loop_tester.cpp" />
     <ClCompile Include="test_platform.cpp" />
   </ItemGroup>
   <ItemGroup>

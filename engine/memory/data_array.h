@@ -18,8 +18,6 @@ Active blocks are stored in pages and we can fit 64 block per page.
 
 namespace engine
 {
-#define DATUM_HANDLE_INDEX(datum_handle) datum_handle & 0xFFFFFFFF
-#define DATUM_HANDLE_SALT(datum_handle) (datum_handle >> 32) & 0xFFFFFFFF
 
 	typedef int64 datum_handle;
 
@@ -49,28 +47,25 @@ namespace engine
 		char* data;
 
 	public:
-		// first attempt at allocating memory in an array format. Arrays are not automatically garbage collected.
 		
-
 		int64 allocation_size();
 		void delete_all();
 		
 		void make_invalid();
 		void make_valid();
 
-
 		void datum_delete(int32 datum_index);
 		datum_handle datum_new();
 
-		void* datum_get(datum_handle handle);
-		void* datum_get_absolute(int64 index);
+		char* datum_get(datum_handle handle);
+		char* datum_get_absolute(int64 index);
 
 
 	};
 	static_assert(sizeof(s_data_array) == 0x58, "");
 
-	static s_data_array* create_new_data_array(std::string name, int64 maximum_count, int64 datum_size);
-	void dispose(s_data_array* data_array);
+	s_data_array* create_new_data_array(std::string name, int64 maximum_count, int64 datum_size);
+	void dispose_data_array(s_data_array* data_array);
 
 }
 
