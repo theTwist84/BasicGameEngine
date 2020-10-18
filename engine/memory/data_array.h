@@ -74,9 +74,90 @@ namespace engine
 	void data_iterator_new(s_data_array_iterator* iterator, s_data_array* array);
 	char* data_iterator_next(s_data_array_iterator* iterator);
 
-	
+	template <typename t_datum>
+	class c_data_array : public s_data_array
+	{
+		static_assert(__is_base_of(s_datum_header, t_datum));
 
+	public:
+
+		inline void dispose_data_array()
+		{
+			engine::dispose_data_array(this);
+		}
+
+		inline int64 allocation_size()
+		{
+			engine::allocation_size(this);
+		}
+
+		inline void delete_all()
+		{
+			engine::delete_all(this);
+		}
+
+		inline void make_invalid()
+		{
+			engine::make_invalid(this);
+		}
+
+		inline void make_valid()
+		{
+			engine::make_valid(this);
+		}
+
+		inline void datum_delete(datum_handle handle)
+		{
+			engine::datum_delete(this, handle);
+		}
+
+		inline void datum_delete(int32 datum_index)
+		{
+			engine::datum_delete(this, datum_index);
+		}
+
+		inline datum_handle datum_new()
+		{
+			return engine::datum_new(this);
+		}
+
+		inline t_datum* datum_get(datum_handle handle)
+		{
+			return (t_datum*)engine::datum_get(this, handle);
+		}
+
+		inline t_datum* datum_get_absolute(int32 index)
+		{
+			return (t_datum*)engine::datum_get_absolute(this, index);
+		}
+
+	};
+
+	template <typename t_datum>
+	inline c_data_array<t_datum>* create_new_data_array(std::string name, int32 maximum_count)
+	{
+		static_assert(__is_base_of(s_datum_header, t_datum));
+		return (c_data_array<t_datum>*)engine::create_new_data_array(name, maximum_count, sizeof(t_datum));
+	}
+
+	template <typename t_datum>
+	class c_data_array_iterator : public s_data_array_iterator
+	{
+		static_assert(__is_base_of(s_datum_header, t_datum));
+
+	public:
+
+		inline c_data_array_iterator(c_data_array<t_datum>* array)
+		{
+			engine::data_iterator_new(this, array);
+		}
+
+		inline t_datum* data_iterator_next()
+		{
+			return (t_datum*)engine::data_iterator_next(this);
+		}
+
+	};
 }
-
 
 #endif

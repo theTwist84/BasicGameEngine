@@ -17,16 +17,15 @@ int main()
     };
 
 
-    s_data_array* array = create_new_data_array("test_array", 16, sizeof(test_datum));
-
+    c_data_array<test_datum>* array = create_new_data_array<test_datum>("test_array", 16);
 
     datum_handle handles[3];
 
     for (int i = 0; i < 3; i++)
     {
-        datum_handle handle = datum_new(array);
+        datum_handle handle = array->datum_new();
 
-        test_datum* data = (test_datum*)datum_get(array, handle);
+        test_datum* data = array->datum_get(handle);
 
         data->new_value_1 = 0xCDCDCDCDCDCDCDCDu;
         data->new_value_2 = 0xCECEu;
@@ -36,12 +35,17 @@ int main()
         handles[i] = handle;
     }
 
-    datum_delete(array, handles[1]);
-    datum_delete(array, handles[2]);
+    array->datum_delete(handles[1]);
+    array->datum_delete(handles[2]);
+
+
+    c_data_array_iterator<test_datum> test_iterator(array);
+
+
+
 
     // std::cout << "TOTAL UPDATES: " << total_updates << std::endl;
-
-    dispose_data_array(array);
+    array->dispose_data_array();
 
     return 0;
 }
