@@ -43,6 +43,7 @@ namespace rendering
 		inline ID2D1Device1* d2d_device() const { return m_d2d_device; }
 		inline ID3D11DeviceContext1* d3d_device_context() const { return m_d3d_device_context; }
 		inline ID2D1DeviceContext1* d2d_device_context() const { return m_d2d_device_context; }
+		inline IDWriteFactory* dwrite_factory() const { return m_write_factory; }
 
 	private:
 

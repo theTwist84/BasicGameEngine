@@ -6,6 +6,7 @@
 #include "time/engine_time.h"
 #include "time/engine_clock.h"
 #include "debug_ui/fps_display.h"
+#include "globals/engine_globals.h"
 
 UINT mScreenWidth = 1024;
 UINT mScreenHeight = 768;
@@ -31,16 +32,21 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR comman
 int game_main(HINSTANCE instance, HINSTANCE previous_instance, LPSTR command_line, int show_command)
 {
 	debug_printf("Starting up basic_game...\n");
-
-	c_engine_clock clock = c_engine_clock();
-	c_engine_time time = c_engine_time();
-	c_fps_display fps_display = c_fps_display();
-
 	std::wstring window_class_name = L"BasicGame";
 
 	initialize_window(instance, window_class_name, L"Basic Game", show_command);
 
+
+	c_engine_clock clock = c_engine_clock();
+	c_engine_time time = c_engine_time();
+	c_fps_display fps_display = c_fps_display();
 	rendering::c_renderer g_renderer = rendering::c_renderer(m_window_handle, true);
+
+	s_engine_globals engine_globals;
+	engine_globals.engine_clock = &clock;
+	engine_globals.engine_time = &time;
+	engine_globals.renderer = &g_renderer;
+
 
 	// build settings
 	engine::s_renderer_settings settings;
@@ -60,6 +66,7 @@ int game_main(HINSTANCE instance, HINSTANCE previous_instance, LPSTR command_lin
 		shutdown(window_class_name);
 		return -1;
 	}
+
 
 	// init services
 	fps_display.init(&g_renderer);
