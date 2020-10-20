@@ -82,6 +82,8 @@ namespace rendering
 		bool init_d2d();
 	};
 
+	void release_unknown_object(IUnknown* unknown);
+
 }
 
 

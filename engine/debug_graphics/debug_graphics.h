@@ -3,7 +3,7 @@
 
 #include "../renderer/renderer.h"
 #include "../globals/engine_globals.h"
-#include "../memory/data_array.h"
+#include "../data_structures/data_array.h"
 #include <string>
 
 namespace engine
@@ -35,11 +35,14 @@ namespace engine
 	{
 	public:
 
-		c_debug_graphics(s_engine_globals* engine_globals);
+		c_debug_graphics();
 		~c_debug_graphics();
 
+		datum_handle register_text_entry();
+		void unregister_text_entry(datum_handle handle);
+		s_debug_text* get_text_entry(datum_handle handle);
 
-		void draw(s_engine_globals* engine_globals);
+		void draw();
 
 	private:
 		c_data_array<s_debug_text>* m_debug_text_array;

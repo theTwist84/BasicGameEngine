@@ -36,10 +36,16 @@
     <ClCompile Include="debug_ui\fps_display.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="memory\data_array.cpp">
+    <ClCompile Include="debug_graphics\debug_graphics.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="debug_graphics\debug_graphics.cpp">
+    <ClCompile Include="globals\engine_globals.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="data_structures\data_array.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="data_structures\queue.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -71,13 +77,16 @@
     <ClInclude Include="debug_ui\fps_display.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="memory\data_array.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="globals\engine_globals.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="debug_graphics\debug_graphics.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="data_structures\data_array.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="data_structures\queue.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

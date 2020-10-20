@@ -7,6 +7,7 @@
 #include "time/engine_clock.h"
 #include "debug_ui/fps_display.h"
 #include "globals/engine_globals.h"
+#include "debug_graphics/debug_graphics.h"
 
 UINT mScreenWidth = 1024;
 UINT mScreenHeight = 768;
@@ -39,14 +40,15 @@ int game_main(HINSTANCE instance, HINSTANCE previous_instance, LPSTR command_lin
 
 	c_engine_clock clock = c_engine_clock();
 	c_engine_time time = c_engine_time();
-	c_fps_display fps_display = c_fps_display();
+	c_debug_graphics debug_graphics = c_debug_graphics();
 	rendering::c_renderer g_renderer = rendering::c_renderer(m_window_handle, true);
 
-	s_engine_globals engine_globals;
-	engine_globals.engine_clock = &clock;
-	engine_globals.engine_time = &time;
-	engine_globals.renderer = &g_renderer;
+	s_engine_globals* g_engine = get_engine_globals();
 
+	g_engine->engine_clock = &clock;
+	g_engine->engine_time = &time;
+	g_engine->renderer = &g_renderer;
+	g_engine->debug_graphics = &debug_graphics;
 
 	// build settings
 	engine::s_renderer_settings settings;
@@ -69,11 +71,7 @@ int game_main(HINSTANCE instance, HINSTANCE previous_instance, LPSTR command_lin
 
 
 	// init services
-	fps_display.init(&g_renderer);
-	
-
-
-
+	c_fps_display fps_display = c_fps_display();
 
 	// main loop
 	MSG message;
@@ -96,17 +94,15 @@ int game_main(HINSTANCE instance, HINSTANCE previous_instance, LPSTR command_lin
 			g_renderer.clear_views();
 			
 			// game stuff
-			fps_display.update(&time);
+			fps_display.update();
 
 
-			// draw stuff
-			fps_display.draw(&time);
-
-
-			g_renderer.test_d2d();
+			debug_graphics.draw();
 
 			g_renderer.render();
-			Sleep(1000/60);
+
+			
+			// Sleep(1000/60);
 		}
 	}
 

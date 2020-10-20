@@ -5,6 +5,7 @@ namespace engine
 {
 	class c_engine_time;
 	class c_engine_clock;
+	class c_debug_graphics;
 
 }
 
@@ -20,7 +21,11 @@ namespace engine
 		rendering::c_renderer* renderer;
 		c_engine_time* engine_time;
 		c_engine_clock* engine_clock;
+		c_debug_graphics* debug_graphics;
 	};
+
+
+	s_engine_globals* const get_engine_globals();
 
 }
 

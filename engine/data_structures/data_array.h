@@ -1,5 +1,5 @@
-#ifndef __ENGINE_MEMORY_DATA_ARRAY_H
-#define __ENGINE_MEMORY_DATA_ARRAY_H
+#ifndef __ENGINE_DATA_STRUCTURES_DATA_ARRAY_H
+#define __ENGINE_DATA_STRUCTURES_DATA_ARRAY_H
 
 #include "../engine_definitions.h"
 #include <string>

@@ -3,6 +3,8 @@
 
 #include "../time/engine_time.h"
 #include "../renderer/renderer.h"
+#include "../globals/engine_globals.h"
+#include "../data_structures/data_array.h"
 #include <DirectXMath.h>
 
 namespace DirectX
@@ -20,21 +22,16 @@ namespace engine
 		c_fps_display();
 		~c_fps_display();
 
-		void init(const rendering::c_renderer* const renderer);
-		void update(const c_engine_time* time);
-		void draw(const c_engine_time* time);
+		void update();
 		
 
 	private:
-		DirectX::SpriteBatch* m_sprite_batch;
-		DirectX::SpriteFont* m_sprite_font;
-
 		DirectX::XMFLOAT2 m_text_position;
 
 		int m_frame_count;
 		int m_frame_rate;
 		double m_last_total_time;
-
+		datum_handle m_debug_text_handle;
 	};
 
 

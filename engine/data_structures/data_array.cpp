@@ -256,7 +256,7 @@ namespace engine
 			return -1;
 
 		// find first index with valid page, starting from specified index.
-		while (data_array_is_datum_used(data_array, result_index))
+		while (!data_array_is_datum_used(data_array, result_index))
 		{
 			result_index++;
 			if (result_index >= data_array->first_unallocated_index)

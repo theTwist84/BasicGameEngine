@@ -2,11 +2,12 @@
 #include "engine_debug.h"
 #include <cmath>
 #include <random>
-#include "memory/data_array.h"
+#include "data_structures/data_array.h"
+#include "data_structures/queue.h"
 
 using namespace engine;
 
-int main()
+void data_array_test()
 {
     struct test_datum : s_datum_header
     {
@@ -41,11 +42,50 @@ int main()
 
     c_data_array_iterator<test_datum> test_iterator(array);
 
-
-
-
-    // std::cout << "TOTAL UPDATES: " << total_updates << std::endl;
     array->dispose_data_array();
+
+    
+}
+
+
+int main()
+{
+    c_queue<int64>* queue = create_new_queue<int64>(10);
+
+    auto is_empty = queue->is_empty();
+
+    for (int i = 0; i < 10; i++)
+    {
+        int64 val = i;
+        queue->put(&val);
+    }
+
+    auto is_full = queue->is_full();
+
+    int64 front = *queue->front();
+    queue->pop();
+
+    int64 second = *queue->front();
+
+
+
+    int64 back = *queue->back();
+
+
+    for (int i = 0; i < 9; i++)
+    {
+        queue->pop();
+    }
+    
+
+    is_empty &= queue->is_empty();
+
+
+    if (is_empty && is_full && front == 0 && second == 1 && back == 9)
+    {
+        printf("Queue test succeeded!");
+    }
+
 
     return 0;
 }

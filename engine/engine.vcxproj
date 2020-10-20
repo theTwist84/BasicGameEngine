@@ -175,22 +175,25 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="data_structures\queue.cpp" />
     <ClCompile Include="debug_graphics\debug_graphics.cpp" />
     <ClCompile Include="debug_ui\fps_display.cpp" />
     <ClCompile Include="engine.cpp" />
     <ClCompile Include="engine_exception.cpp" />
+    <ClCompile Include="globals\engine_globals.cpp" />
     <ClCompile Include="IO\utils.cpp" />
-    <ClCompile Include="memory\data_array.cpp" />
+    <ClCompile Include="data_structures\data_array.cpp" />
     <ClCompile Include="time\engine_time.cpp" />
     <ClCompile Include="renderer\renderer.cpp" />
     <ClCompile Include="time\engine_clock.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="data_structures\queue.h" />
     <ClInclude Include="debug_graphics\debug_graphics.h" />
     <ClInclude Include="debug_ui\fps_display.h" />
     <ClInclude Include="globals\engine_globals.h" />
     <ClInclude Include="IO\utils.h" />
-    <ClInclude Include="memory\data_array.h" />
+    <ClInclude Include="data_structures\data_array.h" />
     <ClInclude Include="time\engine_clock.h" />
     <ClInclude Include="engine_debug.h" />
     <ClInclude Include="engine_exception.h" />
