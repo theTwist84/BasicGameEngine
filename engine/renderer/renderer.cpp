@@ -364,6 +364,7 @@ namespace rendering
 			debug_printf("Cannot present if D3D is not initialized");
 			return false;
 		}
+
 		return SUCCEEDED(m_swap_chain->Present(0, 0));
 	}
 

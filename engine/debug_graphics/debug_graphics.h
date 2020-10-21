@@ -3,30 +3,16 @@
 
 #include "../renderer/renderer.h"
 #include "../globals/engine_globals.h"
-#include "../data_structures/data_array.h"
+#include "../data_structures/queue.h"
 #include <string>
 
 namespace engine
 {
-	struct s_debug_text : s_datum_header
+	struct s_debug_text
 	{
 		D2D1_COLOR_F brush_color;
-		wchar_t font_name[k_maximum_string_length];
-		IDWriteFontCollection* font_collection;
-		DWRITE_FONT_WEIGHT font_weight;
-		DWRITE_FONT_STYLE font_style;
-		DWRITE_FONT_STRETCH font_stretch;
-		DWRITE_TEXT_ALIGNMENT text_alignment;
-		DWRITE_PARAGRAPH_ALIGNMENT paragraph_alignment;
-
-		float32 font_size;
-		wchar_t locale_name[k_maximum_string_length];
 		D2D1_POINT_2F position;
-
-		float32 box_max_width;
-		float32 box_max_height;
-
-		wchar_t message[k_maximum_long_string_length];
+		wchar_t message[1024];
 		int32 actual_message_length;
 	};
 
@@ -38,15 +24,22 @@ namespace engine
 		c_debug_graphics();
 		~c_debug_graphics();
 
-		datum_handle register_text_entry();
-		void unregister_text_entry(datum_handle handle);
-		s_debug_text* get_text_entry(datum_handle handle);
-
 		void draw();
 
+		void print_string(D2D1_COLOR_F color, const wchar_t* format, ...);
+
 	private:
-		c_data_array<s_debug_text>* m_debug_text_array;
+
+		IDWriteTextFormat* m_debug_text_format;
+		c_queue<s_debug_text>* m_debug_text_queue;
+
+		float m_current_line_y_offset;
+
+
 	};
+
+	c_debug_graphics* const get_debug_graphics();
+	void initialize_global_debug_graphics(c_debug_graphics* graphics_instance);
 }
 
 #endif

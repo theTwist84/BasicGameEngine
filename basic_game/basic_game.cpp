@@ -38,17 +38,10 @@ int game_main(HINSTANCE instance, HINSTANCE previous_instance, LPSTR command_lin
 	initialize_window(instance, window_class_name, L"Basic Game", show_command);
 
 
-	c_engine_clock clock = c_engine_clock();
-	c_engine_time time = c_engine_time();
-	c_debug_graphics debug_graphics = c_debug_graphics();
+	
 	rendering::c_renderer g_renderer = rendering::c_renderer(m_window_handle, true);
 
-	s_engine_globals* g_engine = get_engine_globals();
-
-	g_engine->engine_clock = &clock;
-	g_engine->engine_time = &time;
-	g_engine->renderer = &g_renderer;
-	g_engine->debug_graphics = &debug_graphics;
+	
 
 	// build settings
 	engine::s_renderer_settings settings;
@@ -69,9 +62,24 @@ int game_main(HINSTANCE instance, HINSTANCE previous_instance, LPSTR command_lin
 		return -1;
 	}
 
+	// init globals
+
+	c_engine_clock clock = c_engine_clock();
+	c_engine_time time = c_engine_time();
+	s_engine_globals* g_engine = get_engine_globals();
+
+	g_engine->engine_clock = &clock;
+	g_engine->engine_time = &time;
+	g_engine->renderer = &g_renderer;
+
+	// init debug
+	c_debug_graphics debug_graphics = c_debug_graphics();
+	initialize_global_debug_graphics(&debug_graphics);
 
 	// init services
 	c_fps_display fps_display = c_fps_display();
+
+
 
 	// main loop
 	MSG message;
@@ -97,11 +105,8 @@ int game_main(HINSTANCE instance, HINSTANCE previous_instance, LPSTR command_lin
 			fps_display.update();
 
 
-			debug_graphics.draw();
-
+			get_debug_graphics()->draw();
 			g_renderer.render();
-
-			
 			// Sleep(1000/60);
 		}
 	}

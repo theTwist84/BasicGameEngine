@@ -26,12 +26,9 @@ namespace engine
 		
 
 	private:
-		DirectX::XMFLOAT2 m_text_position;
-
 		int m_frame_count;
 		int m_frame_rate;
 		double m_last_total_time;
-		datum_handle m_debug_text_handle;
 	};
 
 
