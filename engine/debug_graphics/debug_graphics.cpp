@@ -49,9 +49,9 @@ namespace engine
 
 		debug_text.actual_message_length = (int32)wcslen(debug_text.message);
 		debug_text.brush_color = color;
-		debug_text.position = D2D1::Point2F(5.0f, m_current_line_y_offset + 2.0f);
+		debug_text.position = D2D1::Point2F(5.0f, m_current_line_y_offset + 5.0f);
 
-		//m_current_line_y_offset += 16.0f;
+		m_current_line_y_offset += 16.0f;
 
 		m_debug_text_queue->put(&debug_text);
 	}
@@ -97,5 +97,7 @@ namespace engine
 		// draw other stuff
 
 		d2d_device_context->EndDraw();
+
+		m_current_line_y_offset = 0.0f;
 	}
 }

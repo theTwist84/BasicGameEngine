@@ -8,6 +8,7 @@
 #include "debug_ui/fps_display.h"
 #include "globals/engine_globals.h"
 #include "debug_graphics/debug_graphics.h"
+#include "input/keyboard.h"
 
 UINT mScreenWidth = 1024;
 UINT mScreenHeight = 768;
@@ -63,7 +64,6 @@ int game_main(HINSTANCE instance, HINSTANCE previous_instance, LPSTR command_lin
 	}
 
 	// init globals
-
 	c_engine_clock clock = c_engine_clock();
 	c_engine_time time = c_engine_time();
 	s_engine_globals* g_engine = get_engine_globals();
@@ -78,7 +78,7 @@ int game_main(HINSTANCE instance, HINSTANCE previous_instance, LPSTR command_lin
 
 	// init services
 	c_fps_display fps_display = c_fps_display();
-
+	c_keyboard keyboard = c_keyboard();
 
 
 	// main loop
@@ -101,13 +101,16 @@ int game_main(HINSTANCE instance, HINSTANCE previous_instance, LPSTR command_lin
 
 			g_renderer.clear_views();
 			
-			// game stuff
+			// update services
+			keyboard.update();
+
+			// update game components
 			fps_display.update();
-
-
+			
+			// draw and render
 			get_debug_graphics()->draw();
 			g_renderer.render();
-			// Sleep(1000/60);
+			Sleep(1000/60);
 		}
 	}
 

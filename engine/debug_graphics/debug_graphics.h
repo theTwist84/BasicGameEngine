@@ -34,8 +34,6 @@ namespace engine
 		c_queue<s_debug_text>* m_debug_text_queue;
 
 		float m_current_line_y_offset;
-
-
 	};
 
 	c_debug_graphics* const get_debug_graphics();
