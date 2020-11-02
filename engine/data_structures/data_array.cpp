@@ -11,7 +11,7 @@ namespace engine
 
 	};
 
-	void initialize_data_array(void* allocated_memory, std::string name, int32 capacity, int64 datum_size)
+	void initialize_data_array(void* allocated_memory, std::string name, int32 capacity, int64 datum_size, c_allocator* const allocator)
 	{
 		int64 data_memory_size = capacity * datum_size;
 		int64 active_page_memory_size = sizeof(int64) * ((capacity + (k_block_per_page - 1)) >> k_page_index_bit_shift);
@@ -26,7 +26,7 @@ namespace engine
 		new_array->next_salt = 0x80000000u;
 		new_array->next_index = 0;
 		new_array->first_unallocated_index = 0;
-
+		new_array->allocator = allocator;
 		// data is located immediatly after the struct
 		new_array->data = (char*)allocated_memory + sizeof(s_data_array);
 
@@ -41,7 +41,7 @@ namespace engine
 
 	}
 
-	s_data_array* create_new_data_array(std::string name, int32 capacity, int64 datum_size)
+	s_data_array* create_new_data_array(std::string name, int32 capacity, int64 datum_size, c_allocator* const allocator)
 	{
 		int64 total_memory_size, data_memory_size, active_page_memory_size;
 
@@ -50,11 +50,11 @@ namespace engine
 		total_memory_size = data_memory_size + sizeof(s_data_array) + active_page_memory_size;
 
 		// TODO: add option for custom allocators such that create_new_data_array does not depent on malloc and friends
-		void* allocated_memory = malloc(total_memory_size);
+		void* allocated_memory = allocator->allocate(total_memory_size);
 
 		if (allocated_memory != nullptr)
 		{
-			initialize_data_array(allocated_memory, name, capacity, datum_size);
+			initialize_data_array(allocated_memory, name, capacity, datum_size, allocator);
 			s_data_array* new_array = reinterpret_cast<s_data_array*>(allocated_memory);
 			// signal array has been allocated properly
 			new_array->flags |= _data_array_flags_is_initialized;
@@ -64,37 +64,37 @@ namespace engine
 			return nullptr;
 	}
 
-	int64 allocation_size(s_data_array* data_array)
+	int64 allocation_size(s_data_array* const data_array)
 	{
 		return sizeof(s_data_array) + data_array->capacity * data_array->datum_size + sizeof(int64) * ((data_array->capacity + (k_block_per_page - 1)) >> k_page_index_bit_shift);
 	}
 
-	void make_invalid(s_data_array* data_array)
+	void make_invalid(s_data_array* const data_array)
 	{
 		data_array->flags &= ~_data_array_flags_is_valid;
 	}
 
-	void make_valid(s_data_array* data_array)
+	void make_valid(s_data_array* const data_array)
 	{
 		data_array->flags |= _data_array_flags_is_valid;
 		delete_all(data_array);
 	}
 
-	void dispose_data_array(s_data_array* data_array)
+	void dispose_data_array(s_data_array* const data_array)
 	{	
+		c_allocator* allocator = data_array->allocator;
 		memset(data_array, 0, sizeof(s_data_array));
-		// TODO: use custom allocator
-		free(data_array);
+		allocator->free(data_array);
 	}
 
-	bool data_array_is_datum_used(s_data_array* data_array, int32 index)
+	bool data_array_is_datum_used(s_data_array* const data_array, int32 index)
 	{
 		int64 page = data_array->active_pages[index >> k_page_index_bit_shift];
 		int64 page_bit = 1i64 << (index & (k_block_per_page - 1));
 		return (page_bit & page) != 0;
 	}
 
-	void delete_all(s_data_array* data_array)
+	void delete_all(s_data_array* const data_array)
 	{
 		data_array->first_unallocated_index = 0;
 		data_array->active_count = 0;
@@ -111,7 +111,7 @@ namespace engine
 		memset(data_array->active_pages, 0, sizeof(int64) * ((data_array->capacity + (k_block_per_page - 1)) >> k_page_index_bit_shift));
 	}
 
-	void datum_delete(s_data_array* data_array, datum_handle handle)
+	void datum_delete(s_data_array* const data_array, datum_handle handle)
 	{
 		int32 index = handle & 0xFFFFFFFF;
 		if (handle != -1 && index >= 0 && index < data_array->capacity)
@@ -124,7 +124,7 @@ namespace engine
 		}
 	}
 
-	void datum_delete(s_data_array* data_array, int32 datum_index)
+	void datum_delete(s_data_array* const data_array, int32 datum_index)
 	{
 		char* data = &data_array->data[datum_index * data_array->datum_size];
 
@@ -153,7 +153,7 @@ namespace engine
 		data_array->active_count -= 1;
 	}
 
-	datum_handle datum_new(s_data_array* data_array)
+	datum_handle datum_new(s_data_array* const data_array)
 	{
 		int32 current_free_index = data_array->first_unallocated_index;
 		int32 datum_index = data_array->next_index;
@@ -220,7 +220,7 @@ namespace engine
 		return new_handle;
 	}
 
-	char* datum_get(s_data_array* data_array, datum_handle handle)
+	char* datum_get(s_data_array* const data_array, datum_handle handle)
 	{
 		int32 index = handle & 0xFFFFFFFF;
 		int32 salt = (handle >> (64 - k_salt_size)) & 0xFFFFFFFF;
@@ -235,7 +235,7 @@ namespace engine
 		return result;
 	}
 
-	char* datum_get_absolute(s_data_array* data_array, int32 index)
+	char* datum_get_absolute(s_data_array* const data_array, int32 index)
 	{
 		char* result = nullptr;
 		if (index != -1 && index >= 0 && index < data_array->first_unallocated_index)
@@ -248,7 +248,7 @@ namespace engine
 	}
 
 
-	int32 data_array_get_index(s_data_array* data_array, int32 index)
+	int32 data_array_get_index(s_data_array* const data_array, int32 index)
 	{
 		int32 result_index = index;
 
@@ -265,14 +265,14 @@ namespace engine
 		return result_index;
 	}
 
-	void data_iterator_new(s_data_array_iterator* iterator, s_data_array* data_array)
+	void data_iterator_new(s_data_array_iterator* const iterator, s_data_array* const data_array)
 	{
 		iterator->data_array = data_array;
 		iterator->current_datum_handle = -1;
 		iterator->current_index = -1;
 	}
 
-	char* data_iterator_next(s_data_array_iterator* iterator)
+	char* data_iterator_next(s_data_array_iterator* const iterator)
 	{
 		s_data_array* data_array = iterator->data_array;
 		int32 index = data_array_get_index(data_array, iterator->current_index + 1);

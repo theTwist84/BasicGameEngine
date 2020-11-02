@@ -18,7 +18,7 @@ void data_array_test()
     };
 
 
-    c_data_array<test_datum>* array = create_new_data_array<test_datum>("test_array", 16);
+    c_data_array<test_datum>* array = create_new_data_array<test_datum>("test_array", 16, g_heap_allocator());
 
     datum_handle handles[3];
 
@@ -50,7 +50,7 @@ void data_array_test()
 
 int main()
 {
-    c_queue<int64>* queue = create_new_queue<int64>(10);
+    c_queue<int64>* queue = create_new_queue<int64>(10, g_heap_allocator());
 
     auto is_empty = queue->is_empty();
 

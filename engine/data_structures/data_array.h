@@ -2,6 +2,7 @@
 #define __ENGINE_DATA_STRUCTURES_DATA_ARRAY_H
 
 #include "../engine_definitions.h"
+#include "../memory/allocator.h"
 #include <string>
 
 
@@ -43,6 +44,7 @@ namespace engine
 		int64 active_count;
 		int32 next_salt;
 		int32 flags;
+		c_allocator* allocator;
 		char* data;
 	};
 
@@ -53,26 +55,27 @@ namespace engine
 		int32 current_index;
 	};
 
-	s_data_array* create_new_data_array(std::string name, int32 maximum_count, int64 datum_size);
-	void dispose_data_array(s_data_array* data_array);
+	s_data_array* create_new_data_array(std::string name, int32 maximum_count, int64 datum_size, c_allocator* const allocator);
 
-	int64 allocation_size(s_data_array* data_array);
+	void dispose_data_array(s_data_array* const data_array);
 
-	void delete_all(s_data_array* data_array);
+	int64 allocation_size(s_data_array* const data_array);
 
-	void make_invalid(s_data_array* data_array);
-	void make_valid(s_data_array* data_array);
+	void delete_all(s_data_array* const data_array);
 
-	void datum_delete(s_data_array* data_array, datum_handle handle);
-	void datum_delete(s_data_array* data_array, int32 datum_index);
+	void make_invalid(s_data_array* const data_array);
+	void make_valid(s_data_array* const data_array);
 
-	datum_handle datum_new(s_data_array* data_array);
+	void datum_delete(s_data_array* const data_array, datum_handle handle);
+	void datum_delete(s_data_array* const data_array, int32 datum_index);
 
-	char* datum_get(s_data_array* data_array, datum_handle handle);
-	char* datum_get_absolute(s_data_array* data_array, int32 index);
+	datum_handle datum_new(s_data_array* const data_array);
 
-	void data_iterator_new(s_data_array_iterator* iterator, s_data_array* array);
-	char* data_iterator_next(s_data_array_iterator* iterator);
+	char* datum_get(s_data_array* const data_array, datum_handle handle);
+	char* datum_get_absolute(s_data_array* const data_array, int32 index);
+
+	void data_iterator_new(s_data_array_iterator* const iterator, s_data_array* const array);
+	char* data_iterator_next(s_data_array_iterator* const iterator);
 
 	template <typename t_datum>
 	class c_data_array : public s_data_array
@@ -134,10 +137,10 @@ namespace engine
 	};
 
 	template <typename t_datum>
-	inline c_data_array<t_datum>* create_new_data_array(std::string name, int32 maximum_count)
+	inline c_data_array<t_datum>* create_new_data_array(std::string name, int32 maximum_count, c_allocator* const allocator)
 	{
 		static_assert(__is_base_of(s_datum_header, t_datum));
-		return (c_data_array<t_datum>*)engine::create_new_data_array(name, maximum_count, sizeof(t_datum));
+		return (c_data_array<t_datum>*)engine::create_new_data_array(name, maximum_count, sizeof(t_datum), allocator);
 	}
 
 	template <typename t_datum>

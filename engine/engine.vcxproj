@@ -186,6 +186,7 @@
     <ClCompile Include="input\keyboard.cpp" />
     <ClCompile Include="IO\utils.cpp" />
     <ClCompile Include="data_structures\data_array.cpp" />
+    <ClCompile Include="memory\allocator.cpp" />
     <ClCompile Include="time\engine_time.cpp" />
     <ClCompile Include="renderer\renderer.cpp" />
     <ClCompile Include="time\engine_clock.cpp" />
@@ -200,6 +201,7 @@
     <ClInclude Include="input\keyboard.h" />
     <ClInclude Include="IO\utils.h" />
     <ClInclude Include="data_structures\data_array.h" />
+    <ClInclude Include="memory\allocator.h" />
     <ClInclude Include="time\engine_clock.h" />
     <ClInclude Include="engine_debug.h" />
     <ClInclude Include="engine_exception.h" />

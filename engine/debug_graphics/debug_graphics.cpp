@@ -15,7 +15,7 @@ namespace engine
 	c_debug_graphics::c_debug_graphics()
 	{
 		m_current_line_y_offset = 0;
-		m_debug_text_queue = create_new_queue<s_debug_text>(0x100);
+		m_debug_text_queue = create_new_queue<s_debug_text>(0x100, g_heap_allocator());
 
 		IDWriteFactory* write_factory = get_engine_globals()->renderer->dwrite_factory();
 

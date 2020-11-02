@@ -2,6 +2,7 @@
 #define __ENGINE_DATA_STRUCTURES_QUEUE_H
 
 #include "../engine_definitions.h"
+#include "../memory/allocator.h"
 
 namespace engine
 {
@@ -20,10 +21,11 @@ namespace engine
 		int64 front_index;
 		int64 back_index;
 		int64 flags;
+		c_allocator* allocator;
 		char* data;
 	};
 
-	s_queue* create_new_queue(int64 capacity, int64 element_size);
+	s_queue* create_new_queue(int64 capacity, int64 element_size, c_allocator* const allocator);
 	void dispose_queue(s_queue* queue);
 
 	char* queue_front(s_queue* queue);
@@ -59,9 +61,9 @@ namespace engine
 	};
 
 	template <typename t_element>
-	inline c_queue<t_element>* create_new_queue(int64 capacity)
+	inline c_queue<t_element>* create_new_queue(int64 capacity, c_allocator* const allocator)
 	{
-		return (c_queue<t_element>*)engine::create_new_queue(capacity, sizeof(t_element));
+		return (c_queue<t_element>*)engine::create_new_queue(capacity, sizeof(t_element), allocator);
 	}
 }
 

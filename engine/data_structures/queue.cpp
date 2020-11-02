@@ -5,12 +5,12 @@
 
 namespace engine
 {
-	s_queue* create_new_queue(int64 capacity, int64 element_size)
+	s_queue* create_new_queue(int64 capacity, int64 element_size, c_allocator* const allocator)
 	{
 		int64 memory_size = sizeof(s_queue) + capacity * element_size;
 
 		// TODO: use allocator here
-		void* allocated_memory = malloc(memory_size);
+		void* allocated_memory = allocator->allocate(memory_size);
 		
 		memset(allocated_memory, 0, sizeof(s_queue));
 
@@ -23,6 +23,7 @@ namespace engine
 		new_queue->capacity = capacity;
 		new_queue->element_size = element_size;
 		new_queue->flags = _queue_flags_is_initialized;
+		new_queue->allocator = allocator;
 
 		if (ENGINE_DEBUG)
 			new_queue->flags |= _queue_flags_debug_fill;
@@ -34,8 +35,9 @@ namespace engine
 
 	void dispose_queue(s_queue* queue)
 	{
+		c_allocator* allocator = queue->allocator;
 		memset(queue, 0, sizeof(s_queue));
-		free(queue);
+		allocator->free(queue);
 	}
 
 	char* queue_front(s_queue* queue)
