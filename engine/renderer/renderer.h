@@ -34,8 +34,7 @@ namespace rendering
 		void clear_views();
 		bool render();
 
-		bool init_d2d_brushes_fonts();
-		bool test_d2d();
+		bool resize_views(int32 width, int32 height);
 
 		DirectX::XMVECTORF32 m_background_color;
 
@@ -69,9 +68,8 @@ namespace rendering
 		ID2D1Device1* m_d2d_device;
 		ID2D1DeviceContext1* m_d2d_device_context;
 
-		ID2D1SolidColorBrush* m_yellow_brush;
 		IDWriteFactory* m_write_factory;
-		IDWriteTextFormat* m_text_format;
+
 
 		void init_dxgi_swap_chain_full_screen_desc(DXGI_SWAP_CHAIN_FULLSCREEN_DESC* full_screen_desc);
 		void init_dxgi_swap_chain_desc(DXGI_SWAP_CHAIN_DESC1* swap_chain_desc);

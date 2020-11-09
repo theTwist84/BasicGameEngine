@@ -5,6 +5,9 @@ namespace engine
 {
 	class c_engine_time;
 	class c_engine_clock;
+
+	class c_input_manager;
+
 }
 
 namespace rendering
@@ -19,6 +22,7 @@ namespace engine
 		rendering::c_renderer* renderer;
 		c_engine_time* engine_time;
 		c_engine_clock* engine_clock;
+		c_input_manager* input_manager;
 	};
 
 

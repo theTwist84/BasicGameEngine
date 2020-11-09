@@ -20,9 +20,7 @@ namespace rendering
 		m_background_color = { 0.3f, 0.3f, 0.3f, 1.0f };
 		m_d2d_device = nullptr;
 		m_d2d_device_context = nullptr;
-		m_yellow_brush = nullptr;
 		m_write_factory = nullptr;
-		m_text_format = nullptr;
 	}
 
 	void c_renderer::init_dxgi_swap_chain_full_screen_desc(DXGI_SWAP_CHAIN_FULLSCREEN_DESC* full_screen_desc)
@@ -312,9 +310,6 @@ namespace rendering
 		if (!c_renderer::init_d2d())
 			return false;
 
-		if (!c_renderer::init_d2d_brushes_fonts())
-			return false;
-
 		m_initialized = true;
 
 		return true;
@@ -368,18 +363,109 @@ namespace rendering
 		return SUCCEEDED(m_swap_chain->Present(0, 0));
 	}
 
+	bool c_renderer::resize_views(int32 width, int32 height)
+	{
+		if (!m_initialized)
+			return false;
+
+		c_renderer::clear_views();
+
+		bool resize_success = false;
+
+		m_settings.width = width;
+		m_settings.height = height;
+		
+		m_d2d_device_context->SetTarget(nullptr);
+		m_d3d_device_context->OMSetRenderTargets(0, nullptr, nullptr);
+
+		// clear old resources
+		release_unknown_object(m_render_target_view);
+		release_unknown_object(m_depth_stencil_buffer);
+		release_unknown_object(m_depth_stencil_view);
+
+		// resize swap chain
+		if (SUCCEEDED(m_swap_chain->ResizeBuffers(1, width, height, m_swap_chain_format, 0)))
+		{
+			ID3D11Texture2D* back_buffer = nullptr;
+			// acquire back buffer resource
+			if (FAILED(m_swap_chain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&back_buffer))))
+			{
+				release_unknown_object(back_buffer);
+				debug_printf("Failed IDXGISwapChain::GetBuffer(0)\n");
+				return false;
+			}
+			// create resource view for render target from the back buffer
+			if (FAILED(m_d3d_device->CreateRenderTargetView(back_buffer, nullptr, &m_render_target_view)))
+			{
+				release_unknown_object(back_buffer);
+				debug_printf("Failed ID3D11Device::CreateRenderTargetView() for back buffer\n");
+				return false;
+			}
+
+			release_unknown_object(back_buffer);
+
+			// create resource depth stencil buffer
+
+			D3D11_TEXTURE2D_DESC depth_stencil_desc;
+			init_depth_stencil_buffer(&depth_stencil_desc);
+
+			if (FAILED(m_d3d_device->CreateTexture2D(&depth_stencil_desc, nullptr, &m_depth_stencil_buffer)))
+			{
+				debug_printf("Failed ID3D11Device::CreateTexture2D() for depth stencil buffer\n");
+				return false;
+			}
+
+			if (FAILED(m_d3d_device->CreateDepthStencilView(m_depth_stencil_buffer, nullptr, &m_depth_stencil_view)))
+			{
+				debug_printf("Failed ID3D11Device::CreateDepthStencilView()\n");
+				return false;
+			}
+
+			D3D11_VIEWPORT viewport;
+			init_viewport(&viewport);
+
+			m_d3d_device_context->OMSetRenderTargets(1, &m_render_target_view, m_depth_stencil_view);
+			m_d3d_device_context->RSSetViewports(1, &viewport);
+
+			D2D1_BITMAP_PROPERTIES1 bitmap_properties;
+
+			bitmap_properties.pixelFormat.format = m_swap_chain_format;
+			bitmap_properties.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+			bitmap_properties.dpiX = 96.0f;
+			bitmap_properties.dpiY = 96.0f;
+			bitmap_properties.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
+			bitmap_properties.colorContext = nullptr;
+
+			IDXGISurface1* dxgi_buffer = nullptr;
+			ID2D1Bitmap1* bitmap = nullptr;
+
+			if (SUCCEEDED(m_swap_chain->GetBuffer(0, __uuidof(IDXGISurface1), reinterpret_cast<void**>(&dxgi_buffer))))
+			{
+				if (SUCCEEDED(m_d2d_device_context->CreateBitmapFromDxgiSurface(dxgi_buffer, &bitmap_properties, &bitmap)))
+				{
+					m_d2d_device_context->SetTarget(bitmap);
+					resize_success = true;
+				}
+				else
+					debug_printf("Failed ID2D1DeviceContext1::CreateBitmapFromDxgiSurface() for ID2D1Bitmap1.\n");
+			}
+			else
+				debug_printf("Failed IDXGISwapChain1::GetBuffer() for IDXGISurface1.\n");
+		}
+
+		return resize_success;
+	}
+
 	c_renderer::~c_renderer()
 	{
 		release_unknown_object(m_swap_chain);
 		release_unknown_object(m_render_target_view);
 		release_unknown_object(m_depth_stencil_buffer);
 		release_unknown_object(m_depth_stencil_view);
+
 		release_unknown_object(m_dxgi_debug);
 
-
-		release_unknown_object(m_yellow_brush);
 		release_unknown_object(m_write_factory);
-		release_unknown_object(m_text_format);
 
 		release_unknown_object(m_d2d_device_context);
 		release_unknown_object(m_d2d_device);
@@ -470,60 +556,4 @@ namespace rendering
 
 		return init_success;
 	}
-
-	bool c_renderer::init_d2d_brushes_fonts()
-	{
-		auto debug_font = L"Lucida Console";
-		IDWriteFontCollection* font_collection = nullptr;	// use system font collection
-		DWRITE_FONT_WEIGHT font_weight = DWRITE_FONT_WEIGHT_LIGHT;
-		DWRITE_FONT_STYLE font_style = DWRITE_FONT_STYLE_NORMAL;
-		DWRITE_FONT_STRETCH font_stretch = DWRITE_FONT_STRETCH_NORMAL;
-		float32 font_size = 12.0f;
-		auto locale_name = L"en-GB";
-
-		if (SUCCEEDED(m_d2d_device_context->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Yellow), &m_yellow_brush)))
-		{
-			if (SUCCEEDED(m_write_factory->CreateTextFormat(debug_font, font_collection, font_weight, font_style, font_stretch, font_size, locale_name, &m_text_format)))
-			{
-				if (SUCCEEDED(m_text_format->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING)))
-				{
-					if (SUCCEEDED(m_text_format->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR)))
-					{
-						return true;
-					}
-					else
-						debug_printf("Failed DWriteFactory::SetParagraphAlignment().\n");
-				}
-				else
-					debug_printf("Failed DWriteFactory::SetTextAlignment().\n");
-			}
-			else
-				debug_printf("Failed DWriteFactory::CreateTextFormat().\n");
-		}
-		else
-			debug_printf("Failed ID2D1DeviceContext1::CreateSolidColorBrush().\n");
-
-
-
-		return false;
-		
-	}
-
-	bool c_renderer::test_d2d()
-	{
-		// first, create the text layout with actual text
-		std::wstring message = L"Hello there";
-		IDWriteTextLayout* layout = nullptr;
-
-		// temporary float values set, either use the window size or a predefined box size
-		m_write_factory->CreateTextLayout(message.c_str(), (uint32)message.size(), m_text_format, 100.0f, 100.0f, &layout);
-
-		// unsafe drawing, must have result checks
-		m_d2d_device_context->BeginDraw();
-		m_d2d_device_context->DrawTextLayout(D2D1::Point2F(2.0f, 5.0f), layout, m_yellow_brush);
-		m_d2d_device_context->EndDraw();
-
-		return true;
-	}
-
 }

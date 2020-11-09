@@ -4,9 +4,6 @@
 #include "../engine_definitions.h"
 #include <windows.h>
 
-// Taken from
-// https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
-//
 
 namespace engine
 {
@@ -146,6 +143,9 @@ namespace engine
 
 		void update();
 
+		void process_state(RAWKEYBOARD* const raw_keyboard);
+
+
 		bool is_key_down(e_keyboard_keys key) const;
 		bool was_key_down(e_keyboard_keys key) const;
 		bool was_key_pressed_this_frame(e_keyboard_keys key) const;
@@ -161,8 +161,8 @@ namespace engine
 
 		const static int32 vk_count = 256;
 
-		byte m_current_state[vk_count];
-		byte m_last_state[vk_count];
+		bool m_current_state[vk_count];
+		bool m_last_state[vk_count];
 	};
 }
 

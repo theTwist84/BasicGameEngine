@@ -183,7 +183,9 @@
     <ClCompile Include="engine.cpp" />
     <ClCompile Include="engine_exception.cpp" />
     <ClCompile Include="globals\engine_globals.cpp" />
+    <ClCompile Include="input\input_manager.cpp" />
     <ClCompile Include="input\keyboard.cpp" />
+    <ClCompile Include="input\mouse.cpp" />
     <ClCompile Include="IO\utils.cpp" />
     <ClCompile Include="data_structures\data_array.cpp" />
     <ClCompile Include="memory\allocator.cpp" />
@@ -198,7 +200,9 @@
     <ClInclude Include="debug_graphics\debug_graphics.h" />
     <ClInclude Include="debug_ui\fps_display.h" />
     <ClInclude Include="globals\engine_globals.h" />
+    <ClInclude Include="input\input_manager.h" />
     <ClInclude Include="input\keyboard.h" />
+    <ClInclude Include="input\mouse.h" />
     <ClInclude Include="IO\utils.h" />
     <ClInclude Include="data_structures\data_array.h" />
     <ClInclude Include="memory\allocator.h" />

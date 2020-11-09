@@ -11,7 +11,6 @@ enum
 
 };
 
-
 typedef char sbyte;
 typedef unsigned char byte;
 typedef sbyte int8;
@@ -26,6 +25,7 @@ typedef unsigned long long uint64;
 typedef float float32;
 typedef double float64;
 
+static_assert(sizeof(bool) == 0x1, "bool size != 0x1");
 static_assert(sizeof(int8) == 0x1, "int8 size != 0x1");
 static_assert(sizeof(uint8) == 0x1, "uint8 size != 0x1");
 static_assert(sizeof(sbyte) == 0x1, "sbyte size != 0x1");
