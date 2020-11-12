@@ -30,8 +30,8 @@ WNDCLASSEX m_window;
 byte m_current_window_state;
 
 WINDOWPLACEMENT m_window_placement;
-int windowed_width;
-int windowed_height;
+int window_width;
+int window_height;
 
 int shutdown_ok()
 {
@@ -164,14 +164,11 @@ void update_window_mode(HWND window_handle, rendering::c_renderer* renderer, s_c
 		SetWindowLong(window_handle, GWL_STYLE, style | WS_OVERLAPPEDWINDOW);
 		SetWindowPlacement(window_handle, &m_window_placement);
 		SetWindowPos(window_handle, nullptr, 0, 0, 0, 0, SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
-		renderer->resize_views(windowed_width, windowed_height);
+		renderer->resize_views(config->resolution_width, config->resolution_height);
 	}
 
 	m_current_window_state = config->window_mode;
 }
-
-
-
 
 int game_main(HINSTANCE instance, HINSTANCE previous_instance, LPSTR command_line, int show_command)
 {
@@ -190,6 +187,8 @@ int game_main(HINSTANCE instance, HINSTANCE previous_instance, LPSTR command_lin
 
 	// initialize window
 	initialize_window(instance, m_window_class_name, m_window_title, show_command);
+	// hide cursor
+	ShowCursor(false);
 
 	rendering::c_renderer g_renderer = rendering::c_renderer(m_window_handle, true);
 
@@ -201,8 +200,18 @@ int game_main(HINSTANCE instance, HINSTANCE previous_instance, LPSTR command_lin
 	settings.multi_sampling_quality_level = 1;
 	settings.multi_sampling_sample_count = 1;
 	settings.use_vsync = true;
-	settings.width = windowed_width;
-	settings.height = windowed_height;
+
+	if (m_current_window_state == _windowed)
+	{
+		settings.width = window_width;
+		settings.height = window_height;
+	}
+	else
+	{
+		settings.width = config.resolution_width;
+		settings.height = config.resolution_height;
+	}
+	
 
 
 	// init renderer
@@ -291,16 +300,14 @@ int game_main(HINSTANCE instance, HINSTANCE previous_instance, LPSTR command_lin
 		if (skip_game_update)
 			continue;
 
-		if (g_engine->input_manager->mouse()->is_button_down(e_mouse_buttons::_lmb))
+		if (g_engine->input_manager->keyboard()->is_key_down(e_keyboard_keys::_escape))
 		{
-			config.window_mode = _fullscreen_windowed;
-			update_window_mode(m_window_handle, &g_renderer, &config);
+			terminate = true;
 		}
 
 		if (g_engine->input_manager->mouse()->is_button_down(e_mouse_buttons::_rmb))
 		{
-			config.window_mode = _windowed;
-			update_window_mode(m_window_handle, &g_renderer, &config);
+			debug_printf("Mouse button pressed!");
 		}
 
 		// update game components
@@ -348,15 +355,15 @@ void initialize_window(HINSTANCE instance, const std::wstring& className, const 
 	int screenWidth = GetSystemMetrics(SM_CXSCREEN);
 	int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
-	windowed_width = (int)(0.75 * screenWidth);
-	windowed_height = (int)(0.75 * screenHeight);
+	window_width = (int)(0.75 * screenWidth);
+	window_height = (int)(0.75 * screenHeight);
 
-	RECT windowRectangle = { 0, 0, windowed_width, windowed_height };
+	RECT windowRectangle = { 0, 0, window_width, window_height };
 	AdjustWindowRect(&windowRectangle, WS_OVERLAPPEDWINDOW, FALSE);
 
 	POINT center;
-	center.x = (screenWidth - windowed_width) / 2;
-	center.y = (screenHeight - windowed_height) / 2;
+	center.x = (screenWidth - window_width) / 2;
+	center.y = (screenHeight - window_height) / 2;
 
 	m_window_handle = CreateWindow(className.c_str(), windowTitle.c_str(), WS_OVERLAPPED | WS_SYSMENU, center.x, center.y, windowRectangle.right - windowRectangle.left, windowRectangle.bottom - windowRectangle.top, nullptr, nullptr, instance, nullptr);
 	m_current_window_state = _windowed;

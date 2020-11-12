@@ -48,6 +48,10 @@ namespace engine
 		raw_mouse->usUsage = HID_USAGE_GENERIC_MOUSE;
 		raw_mouse->usUsagePage = HID_USAGE_PAGE_GENERIC;
 
+		raw_mouse->dwFlags = RIDEV_INPUTSINK;
+
+		raw_keyboard->dwFlags = RIDEV_NOLEGACY;
+
 		bool result = RegisterRawInputDevices(raw_input_devices, RID_count, sizeof(RAWINPUTDEVICE));
 
 		g_heap_allocator()->free(raw_input_devices);
