@@ -29,6 +29,8 @@ namespace engine
 		int m_frame_count;
 		int m_frame_rate;
 		double m_last_total_time;
+
+		bool m_visible;
 	};
 
 
