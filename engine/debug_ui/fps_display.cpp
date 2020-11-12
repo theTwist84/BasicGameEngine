@@ -45,8 +45,8 @@ namespace engine
 			m_frame_count = 0;
 		}
 		m_frame_count++;
-
-		get_debug_graphics()->print_string(get_fps_display_color(m_frame_rate), L"FPS: %d", m_frame_rate);
-		get_debug_graphics()->print_string(D2D1::ColorF(D2D1::ColorF::White), L"Elapsed  time: %.3f", time->total_time() / 1000);
+		auto line_spacing = get_debug_graphics()->get_line_spacing();
+		get_debug_graphics()->print_string(D2D1::Point2F(5.0f, 5.0f), get_fps_display_color(m_frame_rate), L"FPS: %d", m_frame_rate);
+		get_debug_graphics()->print_string(D2D1::Point2F(5.0f, 5.0f + line_spacing), D2D1::ColorF(D2D1::ColorF::White), L"Elapsed  time: %.3f", time->total_time() / 1000);
 	}
 }

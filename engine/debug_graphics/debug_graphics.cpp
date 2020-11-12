@@ -14,13 +14,12 @@ namespace engine
 
 	c_debug_graphics::c_debug_graphics()
 	{
-		m_current_line_y_offset = 0;
 		m_debug_text_queue = create_new_queue<s_debug_text>(0x100, g_heap_allocator());
 
 		IDWriteFactory* write_factory = get_engine_globals()->renderer->dwrite_factory();
 
 		m_debug_text_format = nullptr;
-		bool success = SUCCEEDED(write_factory->CreateTextFormat(L"Lucida Console", nullptr, DWRITE_FONT_WEIGHT_LIGHT, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 12.0f, L"en-GB", &m_debug_text_format));
+		bool success = SUCCEEDED(write_factory->CreateTextFormat(L"Lucida Console", nullptr, DWRITE_FONT_WEIGHT_LIGHT, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, m_font_size, L"en-GB", &m_debug_text_format));
 		success &= SUCCEEDED(m_debug_text_format->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING));
 		success &= SUCCEEDED(m_debug_text_format->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR));
 
@@ -39,7 +38,7 @@ namespace engine
 		rendering::release_unknown_object(m_debug_text_format);
 	}
 
-	void c_debug_graphics::print_string(D2D1_COLOR_F color, const wchar_t* format, ...)
+	void c_debug_graphics::print_string(D2D1_POINT_2F position, D2D1_COLOR_F color, const wchar_t* format, ...)
 	{
 		s_debug_text debug_text;
 		va_list va;
@@ -49,9 +48,7 @@ namespace engine
 
 		debug_text.actual_message_length = (int32)wcslen(debug_text.message);
 		debug_text.brush_color = color;
-		debug_text.position = D2D1::Point2F(5.0f, m_current_line_y_offset + 5.0f);
-
-		m_current_line_y_offset += 16.0f;
+		debug_text.position = position;
 
 		m_debug_text_queue->put(&debug_text);
 	}
@@ -97,7 +94,5 @@ namespace engine
 		// draw other stuff
 
 		d2d_device_context->EndDraw();
-
-		m_current_line_y_offset = 0.0f;
 	}
 }
