@@ -75,6 +75,7 @@ namespace rendering
 		void init_dxgi_swap_chain_desc(DXGI_SWAP_CHAIN_DESC1* swap_chain_desc);
 		void init_viewport(D3D11_VIEWPORT* viewport);
 		void init_depth_stencil_buffer(D3D11_TEXTURE2D_DESC* texture);
+		void init_d2d_bitmap(D2D1_BITMAP_PROPERTIES1* const bitmap_properties);
 		bool init_d3d_device();
 
 		bool init_d2d();

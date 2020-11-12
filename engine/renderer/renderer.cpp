@@ -427,18 +427,11 @@ namespace rendering
 			m_d3d_device_context->OMSetRenderTargets(1, &m_render_target_view, m_depth_stencil_view);
 			m_d3d_device_context->RSSetViewports(1, &viewport);
 
-			D2D1_BITMAP_PROPERTIES1 bitmap_properties;
-
-			bitmap_properties.pixelFormat.format = m_swap_chain_format;
-			bitmap_properties.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
-			bitmap_properties.dpiX = 96.0f;
-			bitmap_properties.dpiY = 96.0f;
-			bitmap_properties.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
-			bitmap_properties.colorContext = nullptr;
-
 			IDXGISurface1* dxgi_buffer = nullptr;
 			ID2D1Bitmap1* bitmap = nullptr;
-
+			D2D1_BITMAP_PROPERTIES1 bitmap_properties;
+			init_d2d_bitmap(&bitmap_properties);
+			
 			if (SUCCEEDED(m_swap_chain->GetBuffer(0, __uuidof(IDXGISurface1), reinterpret_cast<void**>(&dxgi_buffer))))
 			{
 				if (SUCCEEDED(m_d2d_device_context->CreateBitmapFromDxgiSurface(dxgi_buffer, &bitmap_properties, &bitmap)))
@@ -451,6 +444,9 @@ namespace rendering
 			}
 			else
 				debug_printf("Failed IDXGISwapChain1::GetBuffer() for IDXGISurface1.\n");
+
+			release_unknown_object(dxgi_buffer);
+			release_unknown_object(bitmap);
 		}
 
 		return resize_success;
@@ -475,6 +471,17 @@ namespace rendering
 
 		release_unknown_object(m_d3d_device_context);
 		release_unknown_object(m_d3d_device);
+	}
+
+	void c_renderer::init_d2d_bitmap(D2D1_BITMAP_PROPERTIES1* const bitmap_properties)
+	{
+		memset(bitmap_properties, 0, sizeof(D2D1_BITMAP_PROPERTIES1));
+		bitmap_properties->pixelFormat.format = m_swap_chain_format;
+		bitmap_properties->pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+		bitmap_properties->dpiX = 96.0f;
+		bitmap_properties->dpiY = 96.0f;
+		bitmap_properties->bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
+		bitmap_properties->colorContext = nullptr;
 	}
 
 	bool c_renderer::init_d2d()
@@ -527,13 +534,7 @@ namespace rendering
 		// initialize bitmap properties for D2D
 
 		D2D1_BITMAP_PROPERTIES1 bitmap_properties;
-
-		bitmap_properties.pixelFormat.format = m_swap_chain_format;
-		bitmap_properties.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
-		bitmap_properties.dpiX = 96.0f;
-		bitmap_properties.dpiY = 96.0f;
-		bitmap_properties.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
-		bitmap_properties.colorContext = nullptr;
+		init_d2d_bitmap(&bitmap_properties);
 		
 		IDXGISurface1* dxgi_buffer = nullptr;
 		ID2D1Bitmap1* bitmap = nullptr;

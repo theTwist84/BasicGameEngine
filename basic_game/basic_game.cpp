@@ -10,18 +10,99 @@
 #include "debug_graphics/debug_graphics.h"
 #include "input/input_manager.h"
 #include "hidusage.h"
-
-UINT m_windowed_screen_width = 1440;
-UINT m_windowed_screen_height = 810;
-
-HWND m_window_handle;
-WNDCLASSEX m_window;
+#include "IO/config.h"
+#include "IO/utils.h"
 
 using namespace engine;
 
-
-void update_window_full_screen_windowed(HWND window_handle, rendering::c_renderer* renderer)
+enum window_state : byte
 {
+	_windowed,
+	_fullscreen_windowed,
+	_fullscreen
+};
+
+const std::wstring m_window_class_name = L"BasicGame";
+const std::wstring m_window_title = L"Basic Game";
+
+HWND m_window_handle;
+WNDCLASSEX m_window;
+byte m_current_window_state;
+
+WINDOWPLACEMENT m_window_placement;
+int windowed_width;
+int windowed_height;
+
+int shutdown_ok()
+{
+	UnregisterClass(m_window_class_name.c_str(), m_window.hInstance);
+	return 0;
+}
+
+int shutdown_failure()
+{
+	UnregisterClass(m_window_class_name.c_str(), m_window.hInstance);
+	return -1;
+}
+
+int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR command_line, int show_command)
+{
+	if (ENGINE_DEBUG)
+	{
+		AllocConsole();
+		freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
+	}
+
+	int return_code = game_main(instance, previous_instance, command_line, show_command);
+
+	exit(return_code);
+}
+
+
+bool build_default_settings(s_config* const default_config)
+{
+	if (!default_config)
+		return false;
+
+	default_config->window_mode = _windowed;
+	default_config->resolution_width = GetSystemMetrics(SM_CXSCREEN);
+	default_config->resolution_height = GetSystemMetrics(SM_CYSCREEN);
+
+	return true;
+}
+
+void load_settings(s_config* const config, const s_config* const default_config)
+{
+	auto dir = executable_directory();
+	std::wstring file_path;
+	path_join(file_path, dir, L"config.json");
+
+	// read config always return a valid config, given a valid default_config. If it fails to read, write a valid config over.
+	if (!read_config(file_path, config, default_config))
+		write_config(file_path, config);
+
+	int32 max_width = GetSystemMetrics(SM_CXSCREEN);
+	int32 max_height = GetSystemMetrics(SM_CYSCREEN);
+
+	if (config->resolution_width > max_width)
+		config->resolution_width = max_width;
+
+	if (config->resolution_height > max_height)
+		config->resolution_height = max_height;
+
+
+}
+
+void set_windowed(HWND window_handle, rendering::c_renderer* renderer)
+{
+	m_current_window_state = _windowed;
+}
+
+void set_full_screen_windowed(HWND window_handle, rendering::c_renderer* renderer)
+{
+	if (m_current_window_state == _fullscreen_windowed)
+		return;
+
 	int32 style = GetWindowLong(window_handle, GWL_STYLE);
 
 	WINDOWPLACEMENT previous_placement;
@@ -47,40 +128,70 @@ void update_window_full_screen_windowed(HWND window_handle, rendering::c_rendere
 				renderer->resize_views(width, height);
 			}
 	}
-	/*else
+
+	m_current_window_state = _fullscreen_windowed;
+}
+
+void update_window_mode(HWND window_handle, rendering::c_renderer* renderer, s_config* config)
+{
+	if (m_current_window_state == config->window_mode)
+		return;
+
+
+	int32 style = GetWindowLong(window_handle, GWL_STYLE);
+
+	MONITORINFO monitor_info;
+
+	memset(&monitor_info, 0, sizeof(MONITORINFO));
+	monitor_info.cbSize = sizeof(MONITORINFO);
+
+	if ((style & WS_OVERLAPPEDWINDOW) && config->window_mode == _fullscreen_windowed)
+	{
+		GetMonitorInfo(MonitorFromWindow(window_handle, MONITOR_DEFAULTTOPRIMARY), &monitor_info);
+		SetWindowLong(window_handle, GWL_STYLE, style & ~WS_OVERLAPPEDWINDOW);
+		int32 width = monitor_info.rcMonitor.right - monitor_info.rcMonitor.left;
+		int32 height = monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top;
+
+		SetWindowPos(window_handle, HWND_TOP, monitor_info.rcMonitor.left, monitor_info.rcMonitor.top,
+			width,
+			height,
+			SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+
+		renderer->resize_views(width, height);
+	}
+	else if (config->window_mode == _windowed)
 	{
 		SetWindowLong(window_handle, GWL_STYLE, style | WS_OVERLAPPEDWINDOW);
-		SetWindowPlacement(window_handle, &previous_placement);
+		SetWindowPlacement(window_handle, &m_window_placement);
 		SetWindowPos(window_handle, nullptr, 0, 0, 0, 0, SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
-	}*/
-}
-
-
-int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR command_line, int show_command)
-{
-	if (ENGINE_DEBUG)
-	{
-		AllocConsole();
-		freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
+		renderer->resize_views(windowed_width, windowed_height);
 	}
-	
-	int return_code = game_main(instance, previous_instance, command_line, show_command);
 
-	exit(return_code);
+	m_current_window_state = config->window_mode;
 }
+
+
+
 
 int game_main(HINSTANCE instance, HINSTANCE previous_instance, LPSTR command_line, int show_command)
 {
 	debug_printf("Starting up basic_game...\n");
 
-	std::wstring window_class_name = L"BasicGame";
-	initialize_window(instance, window_class_name, L"Basic Game", show_command);
+	// load settings
 
+	s_config default_config, config;
+	if (!build_default_settings(&default_config))
+	{
+		debug_printf("Failed to generate default settings!\n");
+		return -1;
+	}
 
-	
+	load_settings(&config, &default_config);
+
+	// initialize window
+	initialize_window(instance, m_window_class_name, m_window_title, show_command);
+
 	rendering::c_renderer g_renderer = rendering::c_renderer(m_window_handle, true);
-
-	
 
 	// build settings
 	engine::s_renderer_settings settings;
@@ -90,16 +201,19 @@ int game_main(HINSTANCE instance, HINSTANCE previous_instance, LPSTR command_lin
 	settings.multi_sampling_quality_level = 1;
 	settings.multi_sampling_sample_count = 1;
 	settings.use_vsync = true;
-	settings.width = m_windowed_screen_width;
-	settings.height = m_windowed_screen_height;
+	settings.width = windowed_width;
+	settings.height = windowed_height;
 
 
 	// init renderer
 	if (!g_renderer.initialize(m_window_handle, &settings))
 	{
-		shutdown(window_class_name);
-		return -1;
+		return shutdown_failure();
 	}
+
+	// set window type according to setting
+	update_window_mode(m_window_handle, &g_renderer, &config);
+
 
 	// init globals
 	c_engine_clock clock = c_engine_clock();
@@ -179,7 +293,14 @@ int game_main(HINSTANCE instance, HINSTANCE previous_instance, LPSTR command_lin
 
 		if (g_engine->input_manager->mouse()->is_button_down(e_mouse_buttons::_lmb))
 		{
-			update_window_full_screen_windowed(m_window_handle, &g_renderer);
+			config.window_mode = _fullscreen_windowed;
+			update_window_mode(m_window_handle, &g_renderer, &config);
+		}
+
+		if (g_engine->input_manager->mouse()->is_button_down(e_mouse_buttons::_rmb))
+		{
+			config.window_mode = _windowed;
+			update_window_mode(m_window_handle, &g_renderer, &config);
 		}
 
 		// update game components
@@ -191,9 +312,22 @@ int game_main(HINSTANCE instance, HINSTANCE previous_instance, LPSTR command_lin
 		Sleep(1000 / 60);
 	}
 
-	shutdown(window_class_name);
-	return 0;
+	return shutdown_ok();
 }
+
+
+LRESULT WINAPI WndProc(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	switch (message)
+	{
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		return 0;
+	}
+
+	return DefWindowProc(windowHandle, message, wParam, lParam);
+}
+
 
 void initialize_window(HINSTANCE instance, const std::wstring& className, const std::wstring windowTitle, int showCommand)
 {
@@ -208,42 +342,28 @@ void initialize_window(HINSTANCE instance, const std::wstring& className, const 
 	m_window.hbrBackground = GetSysColorBrush(COLOR_BTNFACE);
 	m_window.lpszClassName = className.c_str();
 
-	RECT windowRectangle = { 0, 0, (long)m_windowed_screen_width, (long)m_windowed_screen_height };
-	AdjustWindowRect(&windowRectangle, WS_OVERLAPPEDWINDOW, FALSE);
-
 	RegisterClassEx(&m_window);
-	POINT center = CenterWindow(m_windowed_screen_width, m_windowed_screen_height);
-	m_window_handle = CreateWindow(className.c_str(), windowTitle.c_str(), WS_OVERLAPPED | WS_MINIMIZEBOX | WS_SYSMENU, center.x, center.y, windowRectangle.right - windowRectangle.left, windowRectangle.bottom - windowRectangle.top, nullptr, nullptr, instance, nullptr);
 
-	ShowWindow(m_window_handle, showCommand);
-	UpdateWindow(m_window_handle);
-}
 
-LRESULT WINAPI WndProc(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	switch (message)
-	{
-	case WM_DESTROY:
-		PostQuitMessage(0);
-		return 0;
-	}
-
-	return DefWindowProc(windowHandle, message, wParam, lParam);
-}
-
-POINT CenterWindow(int windowWidth, int windowHeight)
-{
 	int screenWidth = GetSystemMetrics(SM_CXSCREEN);
 	int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
+	windowed_width = (int)(0.75 * screenWidth);
+	windowed_height = (int)(0.75 * screenHeight);
+
+	RECT windowRectangle = { 0, 0, windowed_width, windowed_height };
+	AdjustWindowRect(&windowRectangle, WS_OVERLAPPEDWINDOW, FALSE);
+
 	POINT center;
-	center.x = (screenWidth - windowWidth) / 2;
-	center.y = (screenHeight - windowHeight) / 2;
+	center.x = (screenWidth - windowed_width) / 2;
+	center.y = (screenHeight - windowed_height) / 2;
 
-	return center;
-}
+	m_window_handle = CreateWindow(className.c_str(), windowTitle.c_str(), WS_OVERLAPPED | WS_SYSMENU, center.x, center.y, windowRectangle.right - windowRectangle.left, windowRectangle.bottom - windowRectangle.top, nullptr, nullptr, instance, nullptr);
+	m_current_window_state = _windowed;
 
-void shutdown(const std::wstring& className)
-{
-	UnregisterClass(className.c_str(), m_window.hInstance);
+	ShowWindow(m_window_handle, showCommand);
+	UpdateWindow(m_window_handle);
+
+	memset(&m_window_placement, 0, sizeof(WINDOWPLACEMENT));
+	GetWindowPlacement(m_window_handle, &m_window_placement);
 }

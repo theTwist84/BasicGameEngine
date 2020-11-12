@@ -186,6 +186,7 @@
     <ClCompile Include="input\input_manager.cpp" />
     <ClCompile Include="input\keyboard.cpp" />
     <ClCompile Include="input\mouse.cpp" />
+    <ClCompile Include="IO\config.cpp" />
     <ClCompile Include="IO\utils.cpp" />
     <ClCompile Include="data_structures\data_array.cpp" />
     <ClCompile Include="memory\allocator.cpp" />
@@ -203,6 +204,7 @@
     <ClInclude Include="input\input_manager.h" />
     <ClInclude Include="input\keyboard.h" />
     <ClInclude Include="input\mouse.h" />
+    <ClInclude Include="IO\config.h" />
     <ClInclude Include="IO\utils.h" />
     <ClInclude Include="data_structures\data_array.h" />
     <ClInclude Include="memory\allocator.h" />
@@ -216,8 +218,16 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="c26812_disabled.ruleset" />
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\packages\nlohmann.json.3.9.1\build\native\nlohmann.json.targets" Condition="Exists('..\packages\nlohmann.json.3.9.1\build\native\nlohmann.json.targets')" />
   </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\nlohmann.json.3.9.1\build\native\nlohmann.json.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\nlohmann.json.3.9.1\build\native\nlohmann.json.targets'))" />
+  </Target>
 </Project>

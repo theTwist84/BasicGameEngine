@@ -73,6 +73,11 @@ namespace engine
 		}
 	}
 
+	bool file_exists(const std::wstring& file_path)
+	{
+		return PathFileExists(file_path.c_str());
+	}
+
 	void load_binary_file(const std::wstring& filename, std::vector<char>* data)
 	{
 		std::ifstream file(filename.c_str(), std::ios::binary);

@@ -76,6 +76,8 @@ namespace engine
 	/// <param name="source"></param>
 	/// <param name="dest"></param>
 	void get_path_extension(const std::wstring& source, std::wstring& dest);
+
+	bool file_exists(const std::wstring& file_path);
 }
 
 #endif

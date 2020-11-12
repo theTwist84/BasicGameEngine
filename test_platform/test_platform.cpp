@@ -4,6 +4,8 @@
 #include <random>
 #include "data_structures/data_array.h"
 #include "data_structures/queue.h"
+#include "IO/config.h"
+#include "IO/utils.h"
 
 using namespace engine;
 
@@ -47,8 +49,7 @@ void data_array_test()
     
 }
 
-
-int main()
+void data_queue_test()
 {
     c_queue<int64>* queue = create_new_queue<int64>(10, g_heap_allocator());
 
@@ -76,7 +77,7 @@ int main()
     {
         queue->pop();
     }
-    
+
 
     is_empty &= queue->is_empty();
 
@@ -86,6 +87,47 @@ int main()
         printf("Queue test succeeded!");
     }
 
+
+}
+
+void config_test()
+{
+
+}
+
+int main()
+{
+    s_config default_config;
+    default_config.window_mode = 1;
+    default_config.resolution_height = 1000;
+    default_config.resolution_width = 1000;
+
+
+    s_config config;
+    config.window_mode = 0;
+    config.resolution_height = 100;
+    config.resolution_width = 200;
+
+    auto dir = executable_directory();
+    std::wstring file_path;
+    path_join(file_path, dir, L"config.json");
+
+    s_config input_config;
+
+    if(read_config(file_path, &input_config, &default_config))
+        printf("Sucessfully read config.");
+    else
+        printf("Failed to read config.");
+
+    if (write_config(file_path, &config))
+        printf("Sucessfully wrote config.");
+    else
+        printf("Failed to write config.");
+
+    if (read_config(file_path, &config, &default_config))
+        printf("Sucessfully read config.");
+    else
+        printf("Failed to read config.");
 
     return 0;
 }

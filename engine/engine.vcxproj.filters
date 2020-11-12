@@ -66,6 +66,9 @@
     <ClCompile Include="input\input_manager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="IO\config.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="engine_exception.h">
@@ -125,8 +128,12 @@
     <ClInclude Include="input\input_manager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="IO\config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="c26812_disabled.ruleset" />
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>
