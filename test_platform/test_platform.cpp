@@ -6,6 +6,8 @@
 #include "data_structures/queue.h"
 #include "IO/config.h"
 #include "IO/utils.h"
+#include <d3dcompiler.h>
+#include <fstream>
 
 using namespace engine;
 
@@ -92,11 +94,6 @@ void data_queue_test()
 
 void config_test()
 {
-
-}
-
-int main()
-{
     s_config default_config;
     default_config.window_mode = 1;
     default_config.resolution_height = 1000;
@@ -114,7 +111,7 @@ int main()
 
     s_config input_config;
 
-    if(read_config(file_path, &input_config, &default_config))
+    if (read_config(file_path, &input_config, &default_config))
         printf("Sucessfully read config.");
     else
         printf("Failed to read config.");
@@ -128,6 +125,94 @@ int main()
         printf("Sucessfully read config.");
     else
         printf("Failed to read config.");
+}
 
+HRESULT compiler_shader(const wchar_t* source_file, const char* entry_point, const char* profile, const wchar_t* out_file)
+{
+    if(!source_file || !entry_point || !profile)
+        return E_INVALIDARG;
+
+    ID3DBlob* blob;
+
+    UINT flags = D3DCOMPILE_ENABLE_STRICTNESS;
+#if defined( DEBUG ) || defined( _DEBUG )
+    flags |= D3DCOMPILE_DEBUG;
+#endif
+
+    const D3D_SHADER_MACRO defines[] =
+    {
+        "EXAMPLE_DEFINE", "1",
+        NULL, NULL
+    };
+
+    ID3DBlob* shaderBlob = nullptr;
+    ID3DBlob* errorBlob = nullptr;
+    HRESULT hr = D3DCompileFromFile(source_file, defines, D3D_COMPILE_STANDARD_FILE_INCLUDE, entry_point, profile, flags, 0, &shaderBlob, &errorBlob);
+    if (FAILED(hr))
+    {
+        if (errorBlob)
+        {
+            OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+            errorBlob->Release();
+        }
+
+        if (shaderBlob)
+            shaderBlob->Release();
+
+        return hr;
+    }
+    else
+    {
+
+        if (shaderBlob)
+        {
+            std::ofstream f(out_file, std::ios::binary);
+            f.write(static_cast<char*>(shaderBlob->GetBufferPointer()), shaderBlob->GetBufferSize());
+            f.close();
+            shaderBlob->Release();
+        }
+            
+    }
+
+
+    return hr;
+}
+
+int shader_compiler_test()
+{
+    // Compile vertex shader shader
+
+    auto dir = executable_directory();
+    std::wstring file_path_vs;
+    std::wstring file_path_vs_out;
+    path_join(file_path_vs_out, dir, L"content\\vs.cso");
+    path_join(file_path_vs, dir, L"content\\vs.hlsl");
+
+    HRESULT hr = compiler_shader(file_path_vs.c_str(), "main", "vs_4_0", file_path_vs_out.c_str());
+    if (FAILED(hr))
+    {
+        printf("Failed compiling vertex shader %08X\n", hr);
+        return -1;
+    }
+    std::wstring file_path_ps;
+    path_join(file_path_ps, dir, L"content\\ps.hlsl");
+    std::wstring file_path_ps_out;
+    path_join(file_path_ps_out, dir, L"content\\ps.cso");
+
+    // Compile pixel shader shader
+    hr = compiler_shader(file_path_ps.c_str(), "main", "ps_4_0", file_path_ps_out.c_str());
+    if (FAILED(hr))
+    {
+        printf("Failed compiling pixel shader %08X\n", hr);
+        return -1;
+    }
+
+    printf("Success\n");
+
+    return 0;
+}
+
+int main()
+{
     return 0;
 }

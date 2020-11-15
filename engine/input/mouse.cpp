@@ -36,9 +36,9 @@ namespace engine
 		m_x_last = m_x_current;
 		m_y_last = m_y_current;
 
-		//m_x = 0;
-		//m_y = 0;
-		//m_wheel = 0;
+		m_x = 0;
+		m_y = 0;
+		m_wheel = 0;
 	}
 
 	void c_mouse::process_state(RAWMOUSE* const raw_mouse)

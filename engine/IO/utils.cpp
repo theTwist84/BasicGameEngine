@@ -80,6 +80,9 @@ namespace engine
 
 	void load_binary_file(const std::wstring& filename, std::vector<char>* data)
 	{
+		if(!file_exists(filename))
+			throw std::exception("Failed to find file.");
+
 		std::ifstream file(filename.c_str(), std::ios::binary);
 		if (file.bad() || !((bool)file))
 		{

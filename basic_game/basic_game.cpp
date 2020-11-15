@@ -12,6 +12,9 @@
 #include "hidusage.h"
 #include "IO/config.h"
 #include "IO/utils.h"
+#include "common/camera.h"
+
+#include "cube_demo.h"
 
 using namespace engine;
 
@@ -57,7 +60,6 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR comman
 
 	exit(return_code);
 }
-
 
 bool build_default_settings(s_config* const default_config)
 {
@@ -188,7 +190,7 @@ int game_main(HINSTANCE instance, HINSTANCE previous_instance, LPSTR command_lin
 	// initialize window
 	initialize_window(instance, m_window_class_name, m_window_title, show_command);
 	// hide cursor
-	ShowCursor(false);
+	// ShowCursor(false);
 
 	rendering::c_renderer g_renderer = rendering::c_renderer(m_window_handle, true);
 
@@ -244,6 +246,21 @@ int game_main(HINSTANCE instance, HINSTANCE previous_instance, LPSTR command_lin
 	c_fps_display fps_display = c_fps_display();
 	g_engine->input_manager->init(m_window_handle);
 
+	// init camera
+	c_camera camera = c_camera(16.0f/9.0f, 50.625f, 0.001f, 1000.0f);
+	g_engine->camera = &camera;
+
+	XMFLOAT3 camera_position = XMFLOAT3(20, 20, 20);
+	camera.set_position(&camera_position);
+	camera.init();
+
+	
+
+	// init example
+	c_cube_demo demo = c_cube_demo();
+
+	demo.init();
+	
 
 	// main loop
 	bool terminate = false;
@@ -310,11 +327,21 @@ int game_main(HINSTANCE instance, HINSTANCE previous_instance, LPSTR command_lin
 			debug_printf("Mouse button pressed!");
 		}
 
+		// process input and create transformation
+		camera.apply_input_transformation();
+
+
 		// update game components
+		camera.update();
 		fps_display.update();
+		demo.update();
 
 		// draw and render
+		demo.draw();
+
+		// debug graphics last
 		get_debug_graphics()->draw();
+		
 		g_renderer.render();
 		Sleep(1000 / 60);
 	}

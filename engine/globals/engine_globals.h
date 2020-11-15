@@ -7,7 +7,7 @@ namespace engine
 	class c_engine_clock;
 
 	class c_input_manager;
-
+	class c_camera;
 }
 
 namespace rendering
@@ -23,6 +23,7 @@ namespace engine
 		c_engine_time* engine_time;
 		c_engine_clock* engine_clock;
 		c_input_manager* input_manager;
+		c_camera* camera;
 	};
 
 
