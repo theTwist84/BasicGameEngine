@@ -13,7 +13,7 @@
 #include "IO/config.h"
 #include "IO/utils.h"
 #include "common/camera.h"
-
+#include <math.h>
 #include "cube_demo.h"
 
 using namespace engine;
@@ -247,10 +247,10 @@ int game_main(HINSTANCE instance, HINSTANCE previous_instance, LPSTR command_lin
 	g_engine->input_manager->init(m_window_handle);
 
 	// init camera
-	c_camera camera = c_camera(16.0f/9.0f, 50.625f, 0.001f, 1000.0f);
+	c_camera camera = c_camera(16.0f/9.0f, 1.570796f, 0.001f, 1000.0f);
 	g_engine->camera = &camera;
 
-	XMFLOAT3 camera_position = XMFLOAT3(20, 20, 20);
+	XMFLOAT3 camera_position = XMFLOAT3(10, 10, 10);
 	camera.set_position(&camera_position);
 	camera.init();
 

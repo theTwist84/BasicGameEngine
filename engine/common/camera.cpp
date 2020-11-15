@@ -2,11 +2,29 @@
 #include "../input/input_manager.h"
 #include "../globals/engine_globals.h"
 #include "../debug_graphics/debug_graphics.h"
+#include <math.h>
 
 using namespace DirectX;
 
 namespace engine
 {
+	/// <summary>
+	/// Compute the perspective transformation matrix from FOV (x axis), aspect ratio, near plane and far plane.
+	/// Near plane and far plane can be reversed for inversing the z-order.
+	/// Matrix is computed for Right Hand side coordinate system.
+	/// </summary>
+	/// <param name="fov"> FOV on the X axis, in radians</param>
+	/// <param name="aspect_ratio"> width / height, e.g. 16/9 for 16:9 aspect ratio.</param>
+	/// <param name="near_plane">Z distance of near plane</param>
+	/// <param name="far_plane">Z distance of far plane</param>
+	/// <returns></returns>
+	XMMATRIX compute_perspective_matrix_fov_RH(float32 fov, float32 aspect_ratio, float32 near_plane, float32 far_plane)
+	{
+		assert(fov > 0.f && fov < g_XMTwoPi[0]);
+		float32 fov_y = 2.0f * std::asinf(0.5f * aspect_ratio * std::sinf(fov * 0.5f));
+		return XMMatrixPerspectiveFovRH(fov_y, aspect_ratio, near_plane, far_plane);
+	}
+
 	c_camera::c_camera(float32 aspect_ratio, float32 fov, float32 near_plane_distance, float32 far_plane_distance) :
 		m_view_matrix(),
 		m_projection_matrix(),
@@ -64,7 +82,7 @@ namespace engine
 	{
 		if (m_projection_matrix_dirty)
 		{
-			XMMATRIX projection_matrix = XMMatrixPerspectiveFovRH(m_fov, m_aspect_ratio, m_near_plane_distance, m_far_plane_distance);
+			XMMATRIX projection_matrix = compute_perspective_matrix_fov_RH(m_fov, m_aspect_ratio, m_near_plane_distance, m_far_plane_distance);
 			XMStoreFloat4x4(&m_projection_matrix, projection_matrix);
 			XMMATRIX view_projection_matrix = XMMatrixMultiply(XMLoadFloat4x4(&m_view_matrix), projection_matrix);
 			XMStoreFloat4x4(&m_view_projection_matrix, view_projection_matrix);
@@ -122,8 +140,8 @@ namespace engine
 	{
 		auto input_manager = get_engine_globals()->input_manager;
 
-		float y = -(float)input_manager->mouse()->y() * 0.005f;	// pitch
-		float x = -(float)input_manager->mouse()->x() * 0.005f;	// yaw
+		float y = -(float)input_manager->mouse()->y() * 0.01f;	// pitch
+		float x = -(float)input_manager->mouse()->x() * 0.01f;	// yaw
 
 		float translation_x = 0.0f;
 		float translation_z = 0.0f;
